@@ -1,0 +1,67 @@
+{
+  "title": "Origin Morph Drawer",
+  "summary": "The menu button opens a full-screen panel that grows as a circle from the button's centre, with large links rising in one after another.",
+  "facets": {
+    "interaction": ["contextual-transition", "section-transition"],
+    "section": ["navigation", "drawer", "morphing", "fullscreen"],
+    "element": ["button", "modal"],
+    "style": ["playful", "maximalist"],
+    "industry": ["music", "studio", "food"]
+  },
+  "useWhen": [
+    "Full-screen navigation for a festival, venue or event site with few top-level pages",
+    "Mobile-first menu where the button sits in a corner and the panel should feel tied to it",
+    "Studio or agency site that wants a bold colour moment when the menu opens",
+    "Replacing a side drawer that slides in from an edge unrelated to the button"
+  ],
+  "techniques": [
+    "clip-path circle() from measured button centre",
+    "CSS transitions that retarget mid-flight",
+    "per-item transition-delay from a custom property",
+    "overflow-hidden line masks",
+    "focus trap with a Tab ring",
+    "inert on background content"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "continuity",
+      "how": "On open the script measures the button and sets --cx, --cy and --r, where --r is the distance to the farthest viewport corner. The panel's clip-path goes from circle(0px at cx cy) to circle(r at cx cy), so it grows out of the button and shrinks back into it."
+    },
+    {
+      "principle": "responsiveness",
+      "how": "Open and close are plain CSS transitions on clip-path and transform, so a second click mid-flight reverses from the current radius. In testing a close issued 150ms into the open took the circle from about 1216px back down without a jump. Input is never locked."
+    },
+    {
+      "principle": "timing",
+      "how": "Opening takes 620ms (--open-duration) on an ease-out and closing takes 420ms (--close-duration) on an ease-in. Links leave together in 200ms with no stagger, so dismissing the menu never waits on the last item."
+    },
+    {
+      "principle": "choreography",
+      "how": "Links rise 140ms after the circle starts, 50ms apart (--link-stagger), so the fifth link starts at 340ms while the circle is still settling. The footer fades in last at 380ms."
+    },
+    {
+      "principle": "parity",
+      "how": "The button and links are real elements with aria-expanded and aria-controls. Focus moves to the first link on open, Tab and Shift+Tab cycle through the button and links only, Escape closes and returns focus to the button, and the page behind is inert."
+    }
+  ],
+  "directions": [
+    { "name": "Minimal", "change": "Use an off-white panel with ink links at 40px, drop the link numbers, and shorten the open to 480ms." },
+    { "name": "Luxury", "change": "Use a deep green or black panel, set the links in a light serif, slow the stagger to 70ms, and fade the footer in after the last link lands." },
+    { "name": "Brutalist", "change": "Swap the circle for clip-path: inset() growing from the button's corner, use a monospaced uppercase link list, and cut every duration by a third." }
+  ],
+  "pitfalls": [
+    "Hard-coding the circle origin. The button moves between breakpoints, so measure it on open and on resize.",
+    "Using a radius such as 100vmax that is too small for some aspect ratios. Compute the distance to the farthest corner.",
+    "Toggling visibility or display at the end of the close with a timer. A quick reopen then fights the timer. Keep the panel rendered, clipped to zero and inert.",
+    "Staggering the exit as well as the entrance. People closing a menu want it gone, so leave together.",
+    "Forgetting the page behind. Without inert on the main content, Tab walks out of the open menu into hidden links."
+  ],
+  "tunables": [
+    { "name": "--open-duration", "default": "620ms", "effect": "How long the circle takes to cover the screen." },
+    { "name": "--close-duration", "default": "420ms", "effect": "How long the circle takes to shrink back into the button." },
+    { "name": "--link-stagger", "default": "50ms", "effect": "Delay between each link rising into view." },
+    { "name": "--ease-out", "default": "cubic-bezier(0.22, 1, 0.36, 1)", "effect": "Curve for the opening circle and the links." },
+    { "name": "--ease-in", "default": "cubic-bezier(0.55, 0, 1, 0.45)", "effect": "Curve for the closing circle and the links leaving." }
+  ],
+  "reducedMotion": "The panel fades in over 200ms and out over 160ms with no circle growth. Links are in place without rising, and the button label and icon change without moving."
+}

@@ -1,0 +1,103 @@
+{
+  "title": "Expanding Row Detail",
+  "summary": "Clicking a service row opens its detail panel in place while the rows below slide down to make room, with only one row open at a time.",
+  "facets": {
+    "interaction": [
+      "contextual-transition"
+    ],
+    "section": [
+      "services",
+      "case-study",
+      "faq"
+    ],
+    "element": [
+      "rows",
+      "list",
+      "accordion"
+    ],
+    "style": [
+      "corporate",
+      "minimal"
+    ],
+    "industry": [
+      "finance",
+      "legal",
+      "saas"
+    ]
+  },
+  "useWhen": [
+    "Services list for a consultancy, law firm or bank where each practice needs a short scope and figures",
+    "Case study index that previews results before linking to the full story",
+    "FAQ or pricing detail that should open in place without jumping the page",
+    "Replacing an accordion that animates height and stutters on phones"
+  ],
+  "techniques": [
+    "FLIP (first, last, invert, play)",
+    "Web Animations API",
+    "clip-path inset reveal",
+    "reading computed clip-path to retarget",
+    "aria-expanded and aria-controls",
+    "inert on the closing panel"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "performance",
+      "how": "No height is ever animated. The script records each row's top, toggles the panel, measures again, then plays translateY(first minus last) to none on every row below. The panel itself is revealed with clip-path: inset(0 0 Hpx 0) to inset(0 0 0px 0) over the same 440ms and curve, so its bottom edge tracks the next row exactly."
+    },
+    {
+      "principle": "continuity",
+      "how": "The detail grows downward out of the row that was clicked, and on close it folds back up into that row. The closing panel is set to position: absolute so it stays where it was while the rows below rise over it."
+    },
+    {
+      "principle": "responsiveness",
+      "how": "Every toggle starts from what is on screen. Positions are read with getBoundingClientRect before running animations are cancelled, and a half-open panel's visible height is read from its computed clip-path, so a second click mid-flight reverses from the current frame."
+    },
+    {
+      "principle": "timing",
+      "how": "Opening takes 440ms (--expand-duration) and closing 330ms (--collapse-duration), 25 percent faster. Row hover feedback is 160ms for the tint and 200ms for the 8px name shift, because people scan these rows often."
+    },
+    {
+      "principle": "parity",
+      "how": "Rows are real buttons with aria-expanded and aria-controls. The hover tint and name shift also appear on :focus-visible, and Escape closes the open row and returns focus to its button."
+    }
+  ],
+  "directions": [
+    {
+      "name": "Editorial",
+      "change": "Set the row names in a large serif, replace the plus icon with a running number, and put a cropped image beside the copy inside the panel."
+    },
+    {
+      "name": "Brutalist",
+      "change": "Use 2px black rules, monospaced names in capitals, and cut the expand to 240ms with a sharper curve such as cubic-bezier(0.5, 0, 0, 1)."
+    },
+    {
+      "name": "Luxury",
+      "change": "Use a dark ground with ivory type, widen the row padding to 40px, and slow the expand to 560ms with the content fading in 80ms after the reveal starts."
+    }
+  ],
+  "pitfalls": [
+    "Animating height or max-height. It forces layout every frame and max-height also distorts the easing, since the curve runs over a guessed maximum.",
+    "Giving the panel clip and the sibling rows different durations or curves. The panel's bottom edge then drifts away from the next row and a gap or overlap appears.",
+    "Measuring after cancelling running animations. The first positions must include the current transforms or a fast second click makes rows jump.",
+    "Rows without an opaque background. The closing panel sits under the rising rows, so transparent rows show it through.",
+    "Hiding the panel with display: none before the close animation runs. Keep it visible and inert until the animation finishes."
+  ],
+  "tunables": [
+    {
+      "name": "--expand-duration",
+      "default": "440ms",
+      "effect": "Duration of the open move for both the panel clip and the rows below. The script reads it into EXPAND_MS."
+    },
+    {
+      "name": "--collapse-duration",
+      "default": "330ms",
+      "effect": "Duration of the close move, read into COLLAPSE_MS. Keep it about 25 percent shorter than opening."
+    },
+    {
+      "name": "--row-ease",
+      "default": "cubic-bezier(0.32, 0.72, 0, 1)",
+      "effect": "Shared curve for the panel and the rows, read into ROW_EASE. They must match for the edges to line up."
+    }
+  ],
+  "reducedMotion": "Rows do not slide and the panel does not wipe. The panel appears in place and its content fades in over 160ms. The hover name shift is removed."
+}

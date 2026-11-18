@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Origin morph drawer</title>
+<style>
+  :root {
+    --cream: #f4eee2;
+    --ink: #171513;
+    --tang: #ff5b22;
+    --cobalt: #2c44f0;
+    --mint: #a6e6c6;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+    --open-duration: 620ms;
+    --close-duration: 420ms;
+    --link-stagger: 50ms;
+  }
+  * { box-sizing: border-box; }
+  html.menu-open { overflow: hidden; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font: 16px/1.45 var(--sans); -webkit-font-smoothing: antialiased; }
+
+  .bar { position: fixed; z-index: 30; top: 0; right: 0; padding: clamp(16px, 2.6vw, 32px); }
+  .logo { position: absolute; z-index: 1; top: clamp(16px, 2.6vw, 32px); left: clamp(16px, 2.6vw, 32px); font-weight: 800; letter-spacing: -0.03em; font-size: 20px; line-height: 44px; }
+  .menu-btn {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: 15px;
+    height: 48px; padding: 0 20px 0 22px; border-radius: 999px; background: var(--ink); color: var(--cream);
+    display: inline-flex; align-items: center; gap: 14px; transition: transform 160ms var(--ease-out);
+  }
+  .menu-btn:active { transform: scale(0.96); }
+  .menu-btn:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+  .btn-label { position: relative; overflow: hidden; height: 1.3em; display: grid; }
+  .btn-label span { grid-area: 1 / 1; transition: transform 260ms var(--ease-out); }
+  .btn-label span + span { transform: translateY(110%); }
+  .menu-open .btn-label span:first-child { transform: translateY(-110%); }
+  .menu-open .btn-label span + span { transform: none; }
+  .bars { position: relative; width: 18px; height: 10px; }
+  .bars i { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; transition: transform 260ms var(--ease-out); }
+  .bars i:first-child { transform: translateY(0); }
+  .bars i:last-child { transform: translateY(8px); }
+  .menu-open .bars i:first-child { transform: translateY(4px) rotate(45deg); }
+  .menu-open .bars i:last-child { transform: translateY(4px) rotate(-45deg); }
+  @media (hover: hover) {
+    .menu-btn:hover .bars i:first-child { transform: translateY(-1px); }
+    .menu-btn:hover .bars i:last-child { transform: translateY(9px); }
+    .menu-open .menu-btn:hover .bars i:first-child { transform: translateY(4px) rotate(45deg) scaleX(1.15); }
+    .menu-open .menu-btn:hover .bars i:last-child { transform: translateY(4px) rotate(-45deg) scaleX(1.15); }
+  }
+  .menu-btn:focus-visible .bars i:first-child { transform: translateY(-1px); }
+  .menu-btn:focus-visible .bars i:last-child { transform: translateY(9px); }
+  .menu-open .menu-btn:focus-visible .bars i:first-child { transform: translateY(4px) rotate(45deg) scaleX(1.15); }
+  .menu-open .menu-btn:focus-visible .bars i:last-child { transform: translateY(4px) rotate(-45deg) scaleX(1.15); }
+
+  .drawer {
+    position: fixed; inset: 0; z-index: 20; background: var(--tang); color: var(--ink);
+    display: grid; grid-template-rows: 1fr auto; padding: clamp(96px, 14vh, 140px) clamp(20px, 5vw, 64px) clamp(24px, 4vw, 44px);
+    clip-path: circle(0px at var(--cx, 100%) var(--cy, 0%));
+    transition: clip-path var(--close-duration) var(--ease-in);
+  }
+  .menu-open .drawer { clip-path: circle(var(--r, 150vmax) at var(--cx, 100%) var(--cy, 0%)); transition: clip-path var(--open-duration) var(--ease-out); }
+  .drawer ol { list-style: none; margin: 0; padding: 0; align-self: center; counter-reset: n; }
+  .drawer li { counter-increment: n; }
+  .drawer a {
+    display: inline-flex; align-items: flex-start; gap: 14px; text-decoration: none; color: inherit;
+    font-weight: 800; letter-spacing: -0.045em; line-height: 0.98; font-size: clamp(48px, 9.5vw, 128px);
+    overflow: hidden; padding: 0 0.04em 0.06em 0; outline: none;
+  }
+  .drawer a::before { content: "0" counter(n); font-size: 13px; letter-spacing: 0; font-weight: 600; margin-top: 0.9em; opacity: 0.7; }
+  .drawer .label { display: block; transform: translateY(110%); transition: transform 200ms var(--ease-in); }
+  .menu-open .drawer .label { transform: none; transition: transform 560ms var(--ease-out) calc(140ms + var(--i) * var(--link-stagger)); }
+  .drawer .label > span { display: inline-block; transition: transform 200ms var(--ease-out); }
+  @media (hover: hover) { .drawer a:hover .label > span { transform: translateX(16px) skewX(-6deg); } }
+  .drawer a:focus-visible .label > span { transform: translateX(16px) skewX(-6deg); }
+  .drawer a:focus-visible { text-decoration: underline; text-decoration-thickness: 4px; text-underline-offset: 8px; }
+  .drawer-foot {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; font-weight: 600;
+    opacity: 0; transition: opacity 160ms var(--ease-in);
+  }
+  .menu-open .drawer-foot { opacity: 1; transition: opacity 400ms var(--ease-out) 380ms; }
+  .drawer-foot small { display: block; font-weight: 500; opacity: 0.75; font-size: 13px; }
+
+  main { min-height: 100vh; display: grid; align-content: end; padding: 120px clamp(20px, 5vw, 64px) clamp(120px, 19vh, 170px); position: relative; overflow: hidden; }
+  .art { position: absolute; inset: 0; width: 100%; height: 100%; }
+  h1 { position: relative; margin: 0; font-weight: 800; font-size: clamp(64px, 15vw, 220px); line-height: 0.84; letter-spacing: -0.06em; }
+  h1 em { font-style: normal; color: var(--cobalt); }
+  .facts { position: relative; display: flex; flex-wrap: wrap; gap: 12px 40px; margin-top: 28px; font-weight: 600; }
+  .facts span { display: block; font-weight: 500; font-size: 13px; opacity: 0.65; }
+
+  @media (max-width: 600px) {
+    .drawer-foot { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer, .menu-open .drawer { clip-path: none; }
+    .drawer { opacity: 0; transition: opacity 160ms ease-out; }
+    .menu-open .drawer { opacity: 1; transition: opacity 200ms ease-out; }
+    .drawer .label, .menu-open .drawer .label { transform: none; transition: none; }
+    .drawer .label > span, .btn-label span, .bars i { transition: none; }
+    .drawer a:hover .label > span, .drawer a:focus-visible .label > span { transform: none; }
+  }
+</style>
+</head>
+<body>
+<span class="logo" id="logo">Low Tide</span>
+<div class="bar">
+  <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="drawer">
+    <span class="btn-label"><span>Menu</span><span aria-hidden="true">Close</span></span>
+    <span class="bars" aria-hidden="true"><i></i><i></i></span>
+  </button>
+</div>
+
+<nav class="drawer" id="drawer" aria-label="Site" inert>
+  <ol>
+    <li><a href="#lineup"><span class="label" style="--i:0"><span>Lineup</span></span></a></li>
+    <li><a href="#tickets"><span class="label" style="--i:1"><span>Tickets</span></span></a></li>
+    <li><a href="#travel"><span class="label" style="--i:2"><span>Getting there</span></span></a></li>
+    <li><a href="#camping"><span class="label" style="--i:3"><span>Camping</span></span></a></li>
+    <li><a href="#faq"><span class="label" style="--i:4"><span>Questions</span></span></a></li>
+  </ol>
+  <div class="drawer-foot">
+    <p style="margin:0">Weekend pass from £85<small>Under 16s free with an adult</small></p>
+    <p style="margin:0">hello@lowtide.example<small>Replies within two days</small></p>
+  </div>
+</nav>
+
+<main id="main">
+  <svg class="art" viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+    <circle cx="1080" cy="290" r="180" fill="#ff5b22"/>
+    <path d="M0 790 Q 90 764 180 790 T 360 790 T 540 790 T 720 790 T 900 790 T 1080 790 T 1260 790 T 1440 790 V900 H0Z" fill="#2c44f0"/>
+    <path d="M0 830 Q 90 804 180 830 T 360 830 T 540 830 T 720 830 T 900 830 T 1080 830 T 1260 830 T 1440 830 V900 H0Z" fill="#a6e6c6"/>
+    <path d="M0 868 Q 90 842 180 868 T 360 868 T 540 868 T 720 868 T 900 868 T 1080 868 T 1260 868 T 1440 868 V900 H0Z" fill="#f4eee2"/>
+  </svg>
+  <h1>Low Tide<br><em>Weekender</em></h1>
+  <div class="facts">
+    <p style="margin:0"><span>When</span>14 to 16 August</p>
+    <p style="margin:0"><span>Where</span>Pett Level shingle, East Sussex</p>
+    <p style="margin:0"><span>Who</span>42 acts on two stages</p>
+  </div>
+</main>
+
+<script>
+const root = document.documentElement;
+const btn = document.getElementById('menu-btn');
+const drawer = document.getElementById('drawer');
+const main = document.getElementById('main');
+const logo = document.getElementById('logo');
+const links = [...drawer.querySelectorAll('a')];
+let isOpen = false;
+
+function placeOrigin() {
+  const b = btn.getBoundingClientRect();
+  const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+  const r = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy));
+  drawer.style.setProperty('--cx', `${cx}px`);
+  drawer.style.setProperty('--cy', `${cy}px`);
+  drawer.style.setProperty('--r', `${Math.ceil(r)}px`);
+}
+
+function setOpen(next, { restoreFocus = true } = {}) {
+  if (next === isOpen) return;
+  isOpen = next;
+  if (next) placeOrigin();
+  root.classList.toggle('menu-open', next);
+  btn.setAttribute('aria-expanded', String(next));
+  drawer.inert = !next;
+  main.inert = next;
+  logo.inert = next;
+  if (next) links[0].focus({ preventScroll: true });
+  else if (restoreFocus) btn.focus({ preventScroll: true });
+}
+
+btn.addEventListener('click', () => setOpen(!isOpen, { restoreFocus: false }));
+links.forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); setOpen(false); }));
+
+addEventListener('keydown', (e) => {
+  if (!isOpen) return;
+  if (e.key === 'Escape') { e.preventDefault(); setOpen(false); return; }
+  if (e.key !== 'Tab') return;
+  const ring = [btn, ...links];
+  const i = ring.indexOf(document.activeElement);
+  const next = e.shiftKey ? (i <= 0 ? ring.length - 1 : i - 1) : (i === ring.length - 1 ? 0 : i + 1);
+  e.preventDefault();
+  ring[next].focus();
+});
+
+addEventListener('resize', () => { if (isOpen) placeOrigin(); });
+</script>
+</body>
+</html>

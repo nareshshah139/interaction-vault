@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magnetic pill button</title>
+<style>
+  :root {
+    --bg: #0c0d0f;
+    --fg: #ecebe6;
+    --dim: #8b8d93;
+    --pill-line: rgba(236, 235, 230, 0.34);
+    --accent: #c9f25d;
+    --ink: #0c0d0f;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+    --fill-duration: 340ms;
+    --fill-exit-duration: 250ms;
+    --magnet-radius: 90px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background:
+      radial-gradient(60% 50% at 50% 62%, rgba(201, 242, 93, 0.07), transparent 70%),
+      radial-gradient(circle at 1px 1px, rgba(236, 235, 230, 0.07) 1px, transparent 0) 0 0 / 28px 28px,
+      var(--bg);
+    color: var(--fg); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased;
+    min-height: 100vh; display: grid; place-items: center; padding: 48px 24px;
+  }
+  main { max-width: 760px; text-align: center; }
+  .eyebrow { display: inline-flex; gap: 10px; align-items: center; font: 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin: 0 0 28px; }
+  .eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1 { margin: 0; font-weight: 600; font-size: clamp(40px, 6.6vw, 80px); line-height: 1; letter-spacing: -0.045em; text-wrap: balance; }
+  .lede { margin: 24px auto 0; max-width: 44ch; color: var(--dim); font-size: 18px; text-wrap: pretty; }
+  .actions { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: center; justify-content: center; }
+
+  .zone { display: inline-block; }
+  .magnetic {
+    appearance: none; border: 0; padding: 0; background: none; cursor: pointer; font: inherit; color: var(--ink);
+    display: inline-block; border-radius: 999px; outline: none; will-change: transform;
+  }
+  .pill {
+    position: relative; display: block; overflow: hidden; border-radius: inherit; color: var(--fg);
+    box-shadow: inset 0 0 0 1px var(--pill-line);
+    height: 60px; padding: 0 30px 0 32px; transition: transform 140ms var(--ease-out);
+  }
+  .label { position: relative; display: flex; align-items: center; gap: 14px; height: 100%; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+  .label svg { flex: none; }
+  .fill {
+    position: absolute; inset: 0; background: var(--accent); color: var(--ink); padding: inherit;
+    clip-path: var(--clip-empty, inset(0 100% 0 0));
+    transition: clip-path var(--fill-exit-duration) var(--ease-in);
+  }
+  .magnetic.is-filled .fill, .magnetic:focus-visible .fill {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path var(--fill-duration) var(--ease-out);
+  }
+  .magnetic.no-tx .fill { transition: none; }
+  .magnetic:focus-visible .pill { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+  .magnetic:active .pill { transform: scale(0.97); }
+
+  .text-link { position: relative; color: var(--fg); text-decoration: none; font-weight: 500; padding: 6px 0; }
+  .text-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 1px; background: currentColor; opacity: 0.4; transform-origin: right; transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out); }
+  .text-link:hover::after, .text-link:focus-visible::after { opacity: 1; transform: scaleX(1); transform-origin: left; }
+  .text-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+  .foot { margin-top: 64px; font: 12px/1.6 var(--mono); color: var(--dim); }
+
+  @media (hover: none) {
+    .magnetic { will-change: auto; }
+    .pill { background: var(--accent); color: var(--ink); box-shadow: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fill, .magnetic.is-filled .fill, .magnetic:focus-visible .fill { clip-path: none; opacity: 0; transition: opacity 160ms ease-out; }
+    .magnetic.is-filled .fill, .magnetic:focus-visible .fill { opacity: 1; }
+    .pill, .text-link::after { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow"><i></i>Relay, private beta</p>
+  <h1>Agents that close their own tickets</h1>
+  <p class="lede">Relay reads the issue, opens a branch, runs your tests and asks for review. You approve the diff or send it back with a note.</p>
+  <div class="actions">
+    <span class="zone" id="zone">
+      <button class="magnetic" id="cta" type="button">
+        <span class="pill">
+          <span class="label" data-follow>Request access <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M10 1l5 5-5 5M15 6H0" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          <span class="fill" aria-hidden="true"><span class="label" data-follow>Request access <svg width="16" height="12" viewBox="0 0 16 12"><path d="M10 1l5 5-5 5M15 6H0" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span></span>
+        </span>
+      </button>
+    </span>
+    <a class="text-link" href="#changelog">Read the changelog</a>
+  </div>
+  <p class="foot">412 teams on the waitlist. Invites go out every Tuesday.</p>
+</main>
+
+<script>
+const PULL = 0.32;
+const LABEL_PULL = 0.16;
+const LERP = 0.14;
+const SIDES = {
+  left: 'inset(0 100% 0 0)',
+  right: 'inset(0 0 0 100%)',
+  top: 'inset(0 0 100% 0)',
+  bottom: 'inset(100% 0 0 0)',
+};
+
+const zone = document.getElementById('zone');
+const btn = document.getElementById('cta');
+const fill = btn.querySelector('.fill');
+const followers = btn.querySelectorAll('[data-follow]');
+const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+let radius = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--magnet-radius')) || 90;
+let rect = zone.getBoundingClientRect();
+const target = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
+let frame = 0, last = 0, fillState = 'empty';
+
+const measure = () => { rect = zone.getBoundingClientRect(); };
+addEventListener('resize', measure);
+addEventListener('scroll', measure, { passive: true });
+
+function onMove(e) {
+  if (!finePointer.matches || reduce.matches) return;
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  const dx = e.clientX - cx, dy = e.clientY - cy;
+  const gap = Math.hypot(Math.max(0, Math.abs(dx) - rect.width / 2), Math.max(0, Math.abs(dy) - rect.height / 2));
+  const f = Math.max(0, 1 - gap / radius);
+  const ease = f * f * (3 - 2 * f);
+  target.x = dx * PULL * ease;
+  target.y = dy * PULL * ease;
+  if (!frame) { last = performance.now(); frame = requestAnimationFrame(tick); }
+}
+
+function tick(now) {
+  const k = 1 - Math.pow(1 - LERP, Math.min(64, now - last) / 16.67);
+  last = now;
+  cur.x += (target.x - cur.x) * k;
+  cur.y += (target.y - cur.y) * k;
+  const settled = Math.abs(target.x - cur.x) < 0.05 && Math.abs(target.y - cur.y) < 0.05;
+  if (settled) { cur.x = target.x; cur.y = target.y; }
+  btn.style.transform = `translate3d(${cur.x.toFixed(2)}px, ${cur.y.toFixed(2)}px, 0)`;
+  const lx = (cur.x * LABEL_PULL / PULL).toFixed(2), ly = (cur.y * LABEL_PULL / PULL).toFixed(2);
+  followers.forEach(el => { el.style.transform = `translate3d(${lx}px, ${ly}px, 0)`; });
+  if (settled) { frame = 0; return; }
+  frame = requestAnimationFrame(tick);
+}
+
+function nearestSide(e) {
+  const r = btn.querySelector('.pill').getBoundingClientRect();
+  const d = {
+    left: (e.clientX - r.left) / r.width,
+    right: (r.right - e.clientX) / r.width,
+    top: (e.clientY - r.top) / r.height,
+    bottom: (r.bottom - e.clientY) / r.height,
+  };
+  return Object.keys(d).reduce((a, b) => (d[a] <= d[b] ? a : b));
+}
+
+btn.addEventListener('pointerenter', (e) => {
+  if (e.pointerType === 'touch' || !finePointer.matches) return;
+  if (fillState === 'empty') {
+    btn.classList.add('no-tx');
+    btn.style.setProperty('--clip-empty', SIDES[nearestSide(e)]);
+    void fill.offsetWidth;
+    btn.classList.remove('no-tx');
+  }
+  btn.classList.add('is-filled');
+  fillState = 'full';
+});
+
+btn.addEventListener('pointerleave', (e) => {
+  if (e.pointerType === 'touch' || fillState !== 'full') return;
+  btn.style.setProperty('--clip-empty', SIDES[nearestSide(e)]);
+  btn.classList.remove('is-filled');
+  fillState = 'leaving';
+});
+
+fill.addEventListener('transitionend', () => {
+  if (fillState === 'leaving') fillState = 'empty';
+});
+
+addEventListener('pointermove', onMove, { passive: true });
+document.documentElement.addEventListener('pointerleave', () => {
+  target.x = target.y = 0;
+  if (!frame) { last = performance.now(); frame = requestAnimationFrame(tick); }
+});
+</script>
+</body>
+</html>

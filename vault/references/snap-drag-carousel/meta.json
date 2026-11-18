@@ -1,0 +1,67 @@
+{
+  "title": "Snap Drag Carousel",
+  "summary": "A row of poster cards that scrolls and snaps natively, can be dragged with the mouse and flicked, and is driven by square previous and next buttons, arrow keys and a progress line.",
+  "facets": {
+    "interaction": ["horizontal-scroll", "card-hover"],
+    "section": ["portfolio", "products"],
+    "element": ["carousel", "card"],
+    "style": ["brutalist", "editorial"],
+    "industry": ["art", "studio", "portfolio"]
+  },
+  "useWhen": [
+    "Selected works strip for a graphic design studio or artist portfolio",
+    "Product or collection row on a fashion or publishing site where cards share one size",
+    "Any horizontal list that must work with touch, trackpad, mouse drag and keyboard",
+    "Replacing a JavaScript slider library with native scroll snapping"
+  ],
+  "techniques": [
+    "CSS scroll-snap with scroll-padding",
+    "pointer events with setPointerCapture",
+    "velocity sampling over the last 100ms",
+    "projected landing point handed to scrollTo smooth",
+    "scrollend to restore snapping",
+    "aria-roledescription carousel and slide"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "responsiveness",
+      "how": "Touch and trackpad use native scrolling with no script in the way. Mouse drag starts after 4px (DRAG_THRESHOLD), captures the pointer, turns snapping off and writes scrollLeft once per animation frame, so the cards stay under the cursor with no lag."
+    },
+    {
+      "principle": "physicality",
+      "how": "On release the script measures velocity over the last 100ms of samples, projects the landing point 220ms ahead (PROJECTION_MS), picks the nearest snap point and hands it to scrollTo with smooth behaviour. A slow 140px drag settles back, a quick 200px flick advances one card."
+    },
+    {
+      "principle": "frequency",
+      "how": "Card hover is a 160ms ease-out shift of 6px (--lift) up and left that uncovers a fixed black block behind the card. It is a hard offset with no shadow animation, so moving across a row of cards stays fast and quiet."
+    },
+    {
+      "principle": "parity",
+      "how": "Previous and next are real buttons that disable at each end. Left and Right arrows work anywhere in the region and move focus to the next card when a card has focus. Card :focus-visible gets the same 6px lift as hover plus a red caption, and a polite live region announces the work after button or key moves."
+    },
+    {
+      "principle": "performance",
+      "how": "Position is native scrollLeft, never a transform on the track. The progress line is a scaleX on a 2px bar updated in a rAF-throttled scroll handler, and nothing else moves while scrolling."
+    }
+  ],
+  "directions": [
+    { "name": "Luxury", "change": "Use wide 3:4 photographs with no borders, a thin hairline progress bar, a serif caption, and a 0.5 opacity on cards that are not snapped." },
+    { "name": "Playful", "change": "Round the cards to 24px, give each a saturated background, and replace the black block lift with a 2deg rotate on hover and focus." },
+    { "name": "Corporate", "change": "Use 16:10 cards with a logo and metric, round buttons, a brand-blue progress bar, and drop the lift for a 1px border colour change." }
+  ],
+  "pitfalls": [
+    "Leaving scroll-snap on during a mouse drag. The browser fights every scrollLeft write and the track stutters.",
+    "Turning snap back on before the smooth scroll ends. Chrome snaps at once and the glide jumps. Wait for scrollend, with a timeout fallback.",
+    "Letting the drag end fire a click on the card under the cursor. Suppress the next click in the capture phase after a real drag.",
+    "Native link and image dragging. Without draggable=false and a dragstart preventDefault the browser starts a drag-and-drop and pointer events stop.",
+    "Moving the track with transforms. That breaks native touch scrolling, keyboard scrolling and focus scrolling at once."
+  ],
+  "tunables": [
+    { "name": "PROJECTION_MS", "default": "220", "effect": "How far ahead release velocity is projected to choose the landing card." },
+    { "name": "DRAG_THRESHOLD", "default": "4", "effect": "Pixels the mouse must move before a press becomes a drag, so plain clicks still open cards." },
+    { "name": "--card-width", "default": "clamp(240px, 24vw, 340px)", "effect": "Width of each card. 76vw on phones." },
+    { "name": "--card-gap", "default": "20px", "effect": "Space between cards." },
+    { "name": "--lift", "default": "6px", "effect": "How far a card shifts up and left on hover and focus." }
+  ],
+  "reducedMotion": "Buttons, arrow keys and drag release jump straight to the target card with scroll behaviour auto instead of gliding. The card lift and button arrow nudge happen without a transition."
+}

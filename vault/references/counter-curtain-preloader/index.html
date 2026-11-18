@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counter curtain preloader</title>
+<style>
+  :root {
+    --night: #14110e;
+    --ivory: #efe7da;
+    --dim: rgba(239, 231, 218, 0.56);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-curtain: cubic-bezier(0.76, 0, 0.24, 1);
+    --curtain-duration: 640ms;
+    --line-duration: 600ms;
+    --line-stagger: 70ms;
+    --reveal-delay: 240ms;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--night); color: var(--ivory); }
+  body { font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+  .loader {
+    position: fixed; inset: 0; z-index: 10; background: var(--night);
+    display: grid; grid-template-rows: auto 1fr auto; padding: clamp(20px, 3.5vw, 44px);
+    clip-path: inset(0 0 0 0);
+  }
+  .loader-inner { display: contents; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); }
+  .loader-top { display: flex; justify-content: space-between; }
+  .loader-bottom { grid-row: 3; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .count {
+    font-family: var(--serif); font-weight: 400; line-height: 0.8; letter-spacing: -0.04em;
+    font-size: clamp(96px, 19vw, 260px); font-variant-numeric: tabular-nums; display: flex; align-items: flex-start;
+  }
+  .count sup { font-size: 0.22em; letter-spacing: 0; margin: 0.1em 0 0 0.12em; color: var(--dim); }
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(239, 231, 218, 0.12); }
+  .bar span { position: absolute; inset: 0; background: var(--ivory); transform: scaleX(0); transform-origin: left; }
+  .loader-shift { transition: transform var(--curtain-duration) var(--ease-curtain); }
+
+  .site { position: fixed; inset: 0; overflow: hidden; }
+  .art { position: absolute; inset: 0; transform: scale(1.08); transition: transform 900ms var(--ease-out); }
+  .art svg { width: 100%; height: 100%; display: block; }
+  .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(20, 17, 14, 0.62), rgba(20, 17, 14, 0) 55%), linear-gradient(to bottom, rgba(20, 17, 14, 0.4), rgba(20, 17, 14, 0) 22%); }
+  .nav {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: clamp(18px, 3vw, 36px) clamp(20px, 3.5vw, 44px);
+    opacity: 0; transition: opacity 400ms var(--ease-out);
+  }
+  .wordmark { font-family: var(--serif); font-size: 21px; letter-spacing: 0.01em; }
+  .nav ul { list-style: none; display: flex; gap: 32px; margin: 0; padding: 0; }
+  .nav a, .replay { color: var(--ivory); text-decoration: none; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .nav a { position: relative; padding: 6px 0; }
+  .nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform 240ms var(--ease-out); }
+  .nav a:hover::after, .nav a:focus-visible::after { transform: scaleX(1); transform-origin: left; }
+  .replay {
+    appearance: none; background: none; cursor: pointer; font-family: inherit;
+    border: 1px solid rgba(239, 231, 218, 0.4); border-radius: 999px; padding: 10px 18px;
+    display: inline-flex; gap: 10px; align-items: center;
+  }
+  .replay svg { transition: transform 300ms var(--ease-out); }
+  .replay:hover svg, .replay:focus-visible svg { transform: rotate(-120deg); }
+  :focus-visible { outline: 1px solid var(--ivory); outline-offset: 4px; }
+
+  .hero-copy { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 0 clamp(20px, 3.5vw, 44px) clamp(28px, 5vw, 56px); display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  h1 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(44px, 7.6vw, 112px); line-height: 0.96; letter-spacing: -0.025em; }
+  .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+  .line > span { display: block; transform: translateY(108%); transition: transform var(--line-duration) var(--ease-out); transition-delay: calc(var(--reveal-delay) + var(--i) * var(--line-stagger)); }
+  .meta { text-align: right; max-width: 32ch; color: var(--dim); opacity: 0; transition: opacity 400ms var(--ease-out) 520ms; }
+  .meta strong { display: block; color: var(--ivory); font-weight: 400; font-family: var(--serif); font-size: 17px; letter-spacing: 0; text-transform: none; margin-bottom: 6px; }
+
+  .is-done .loader { clip-path: inset(0 0 100% 0); transition: clip-path var(--curtain-duration) var(--ease-curtain); }
+  .is-done .loader-shift { transform: translateY(-12vh); }
+  .is-done .art { transform: none; }
+  .is-done .nav { opacity: 1; transition-delay: 320ms; }
+  .is-done .line > span { transform: none; }
+  .is-done .meta { opacity: 1; }
+  .is-resetting * { transition: none !important; }
+
+  @media (max-width: 720px) {
+    .nav ul { display: none; }
+    .hero-copy { flex-direction: column; align-items: flex-start; }
+    .meta { text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loader-shift, .is-done .loader-shift { transform: none; transition: none; }
+    .is-done .loader { clip-path: inset(0 0 0 0); opacity: 0; transition: opacity 240ms ease-out; }
+    .art, .is-done .art { transform: none; transition: none; }
+    .line > span { transform: none; opacity: 0; transition: opacity 240ms ease-out; transition-delay: 0ms; }
+    .is-done .line > span { opacity: 1; }
+    .replay svg { transition: none; }
+    .replay:hover svg, .replay:focus-visible svg { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="loader" id="loader" role="progressbar" aria-label="Loading Olen House" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div class="loader-top loader-shift"><span class="eyebrow">Olen House</span><span class="eyebrow">Harbour suites since 1931</span></div>
+  <div class="loader-bottom loader-shift">
+    <span class="eyebrow">Preparing your stay</span>
+    <span class="count"><span id="count">0</span><sup>%</sup></span>
+  </div>
+  <div class="bar"><span id="bar"></span></div>
+</div>
+
+<div class="site" id="site" aria-busy="true">
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1f2030"/><stop offset=".38" stop-color="#5b4a55"/><stop offset=".56" stop-color="#b9806a"/><stop offset=".64" stop-color="#e3b58e"/>
+        </linearGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#4a4650"/><stop offset="1" stop-color="#15141a"/>
+        </linearGradient>
+        <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fbe4c2"/><stop offset=".6" stop-color="#f2c08f"/><stop offset="1" stop-color="#f2c08f" stop-opacity="0"/></radialGradient>
+        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .5 0"/></filter>
+      </defs>
+      <rect width="1600" height="640" fill="url(#sky)"/>
+      <circle cx="900" cy="636" r="150" fill="url(#sun)" opacity=".55"/>
+      <circle cx="900" cy="640" r="46" fill="#fbe7c8"/>
+      <rect y="640" width="1600" height="360" fill="url(#sea)"/>
+      <g fill="#f6d4ac" id="glints"></g>
+      <path d="M0 610 L120 596 L210 604 L330 588 L420 600 L520 592 L600 606 L640 640 L0 640Z" fill="#2a2430" opacity=".9"/>
+      <path d="M1600 600 L1500 590 L1440 598 L1380 594 L1300 612 L1260 640 L1600 640Z" fill="#2a2430" opacity=".75"/>
+      <rect width="1600" height="1000" filter="url(#grain)" opacity=".07"/>
+    </svg>
+  </div>
+  <div class="scrim"></div>
+  <nav class="nav" aria-label="Primary">
+    <span class="wordmark">Olen House</span>
+    <ul><li><a href="#rooms">Rooms</a></li><li><a href="#dining">Dining</a></li><li><a href="#journal">Journal</a></li></ul>
+    <button class="replay" id="replay" type="button">
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M10.5 6A4.5 4.5 0 1 1 9.2 2.8M10.5 1v2.6H7.9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+      Replay intro
+    </button>
+  </nav>
+  <div class="hero-copy">
+    <h1>
+      <span class="line"><span style="--i:0">Quiet rooms</span></span>
+      <span class="line"><span style="--i:1">above the</span></span>
+      <span class="line"><span style="--i:2">northern harbour</span></span>
+    </h1>
+    <p class="meta eyebrow"><strong>Thirty-one rooms, one table.</strong>Flensburg Fjord, open all year</p>
+  </div>
+</div>
+
+<script>
+const LERP = 0.14;
+const LOAD_BUDGET = 950;
+const COUNTER_MAX = 1400;
+
+const root = document.documentElement;
+const loader = document.getElementById('loader');
+const site = document.getElementById('site');
+const countEl = document.getElementById('count');
+const barEl = document.getElementById('bar');
+
+document.getElementById('glints').innerHTML = Array.from({ length: 22 }, (_, i) => {
+  const y = 650 + i * i * 0.62, w = Math.max(6, 120 - i * 4.6) * (0.6 + ((i * 37) % 10) / 14);
+  return `<rect x="${900 - w / 2 + ((i * 53) % 30) - 15}" y="${y}" width="${w}" height="${1.6 + i * 0.12}" opacity="${0.75 - i * 0.03}"/>`;
+}).join('');
+
+function simulateAssets() {
+  const weights = [8, 3, 3, 12, 2, 2, 6, 4, 18, 3, 5, 2, 9, 3];
+  const total = weights.reduce((a, b) => a + b, 0);
+  const state = { loaded: 0, total };
+  weights.forEach((w, i) => {
+    const t = 80 + Math.random() * (LOAD_BUDGET - 80) * (i === 8 ? 1 : 0.8);
+    setTimeout(() => { state.loaded += w; }, t);
+  });
+  return state;
+}
+
+let frame = 0;
+function run() {
+  cancelAnimationFrame(frame);
+  const assets = simulateAssets();
+  const start = performance.now();
+  let shown = 0, last = start, lastInt = -1;
+  site.setAttribute('aria-busy', 'true');
+  loader.removeAttribute('inert');
+  loader.removeAttribute('aria-hidden');
+
+  const tick = (now) => {
+    const dt = Math.min(64, now - last); last = now;
+    const forced = now - start > COUNTER_MAX;
+    const target = forced ? 100 : (assets.loaded / assets.total) * 100;
+    shown += (target - shown) * (1 - Math.pow(1 - LERP, dt / 16.67));
+    if (target === 100 && shown > 99) shown = 100;
+    const n = Math.floor(shown);
+    if (n !== lastInt) {
+      lastInt = n;
+      countEl.textContent = n;
+      loader.setAttribute('aria-valuenow', n);
+    }
+    barEl.style.transform = `scaleX(${shown / 100})`;
+    if (shown < 100) { frame = requestAnimationFrame(tick); return; }
+    root.classList.add('is-done');
+    site.setAttribute('aria-busy', 'false');
+    loader.setAttribute('inert', '');
+    loader.setAttribute('aria-hidden', 'true');
+    root.dataset.counterMs = Math.round(now - start);
+  };
+  frame = requestAnimationFrame(tick);
+}
+
+document.getElementById('replay').addEventListener('click', () => {
+  root.classList.add('is-resetting');
+  root.classList.remove('is-done');
+  countEl.textContent = '0';
+  barEl.style.transform = 'scaleX(0)';
+  void loader.offsetWidth;
+  root.classList.remove('is-resetting');
+  run();
+});
+
+run();
+</script>
+</body>
+</html>

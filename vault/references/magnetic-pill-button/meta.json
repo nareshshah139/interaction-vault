@@ -1,0 +1,68 @@
+{
+  "title": "Magnetic Pill Button",
+  "summary": "A primary call-to-action pill that leans toward the pointer as it comes near and fills with colour from the side the pointer entered.",
+  "facets": {
+    "interaction": ["cursor-interaction"],
+    "section": ["cta", "hero"],
+    "element": ["button"],
+    "style": ["minimal", "playful"],
+    "industry": ["ai", "saas", "product-design"]
+  },
+  "useWhen": [
+    "Single primary call to action in a dark, sparse product hero for an AI or developer tool",
+    "Waitlist or request-access button that should feel responsive before it is clicked",
+    "Studio or portfolio site that wants one tactile control on an otherwise still page",
+    "Upgrading a flat button hover without adding motion to the rest of the page"
+  ],
+  "techniques": [
+    "pointer distance to the button edge with smoothstep falloff",
+    "frame-rate independent lerp in requestAnimationFrame",
+    "clip-path inset sweep chosen per entry side",
+    "duplicate label inside the fill layer",
+    "matchMedia (hover: hover) and (pointer: fine)",
+    "transition suppression class for instant resets"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "physicality",
+      "how": "The pull is computed from the pointer's distance to the button edge, not its centre. Inside --magnet-radius (90px) a smoothstep falloff scales the offset to 0.32 of the pointer delta (PULL), and the button eases toward it at a lerp of 0.14 per 60Hz frame (LERP). The label moves half as far again (LABEL_PULL 0.16), so the pill reads as having depth."
+    },
+    {
+      "principle": "continuity",
+      "how": "On pointerenter the script finds the nearest edge of the pill and sets the empty clip to that side, for example inset(0 100% 0 0) for the left, before switching to inset(0). The colour arrives from where the pointer came in and leaves toward where it went out."
+    },
+    {
+      "principle": "masking",
+      "how": "The fill layer holds its own copy of the label in ink. The clip-path edge sweeps across both colour and text together, so the label changes from ivory to ink exactly at the edge with no colour transition."
+    },
+    {
+      "principle": "parity",
+      "how": "Keyboard :focus-visible shows the full fill and a 2px accent ring. Under (hover: none) the script skips the magnet and the sweep, and CSS renders a solid accent pill with a 0.97 press scale on :active."
+    },
+    {
+      "principle": "frequency",
+      "how": "The fill enters in 340ms (--fill-duration) on an ease-out and exits in 250ms (--fill-exit-duration) on an ease-in. The rAF loop stops once the button is within 0.05px of its target, so nothing runs while the pointer is away."
+    }
+  ],
+  "directions": [
+    { "name": "Luxury", "change": "Use a thin gold hairline pill on black, cut PULL to 0.18 and LERP to 0.08 for a heavier, slower lean, and fill with a deep champagne tone." },
+    { "name": "Brutalist", "change": "Drop the radius to 0, fill with solid black on a white page, set LERP to 0.3 so the pull feels snappy, and remove the label parallax." },
+    { "name": "Corporate", "change": "Keep the sweep but remove the magnet, use the brand blue for the fill, and set --fill-duration to 220ms for a quiet, frequent control." }
+  ],
+  "pitfalls": [
+    "Measuring the transformed button to compute the pull. The offset then feeds back into the next frame and the button drifts. Measure a static wrapper.",
+    "Applying the pointer delta directly. Without the lerp the button twitches with every mouse event and jitter from the sensor shows.",
+    "Using the magnet on every button. One magnetic control per view keeps it special and stops the page from feeling unstable.",
+    "Running the effect on touch. There is no hover on a phone, so the button would jump on tap. Gate it behind (hover: hover) and (pointer: fine).",
+    "Pulling too far. Past about a third of the pointer delta the button seems to escape the click."
+  ],
+  "tunables": [
+    { "name": "PULL", "default": "0.32", "effect": "Share of the pointer offset the button moves when the pointer is at its edge." },
+    { "name": "LABEL_PULL", "default": "0.16", "effect": "Extra offset applied to the label for a layered feel." },
+    { "name": "LERP", "default": "0.14", "effect": "Damping per 60Hz frame. Lower values feel heavier." },
+    { "name": "--magnet-radius", "default": "90px", "effect": "Distance from the button edge at which the pull starts." },
+    { "name": "--fill-duration", "default": "340ms", "effect": "Time for the fill to sweep in." },
+    { "name": "--fill-exit-duration", "default": "250ms", "effect": "Time for the fill to sweep out. Keep it shorter than the entrance." }
+  ],
+  "reducedMotion": "The button does not move toward the pointer. The fill fades in and out over 160ms instead of sweeping, and keyboard focus still shows the filled state."
+}

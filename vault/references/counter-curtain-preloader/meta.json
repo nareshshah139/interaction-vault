@@ -1,0 +1,68 @@
+{
+  "title": "Counter Curtain Preloader",
+  "summary": "A large percentage counter eases toward 100 as simulated assets load, then a dark curtain wipes upward to reveal a dusk hero whose headline lines rise into place.",
+  "facets": {
+    "interaction": ["preloader", "text-reveal"],
+    "section": ["hero"],
+    "element": [],
+    "style": ["luxury", "minimal"],
+    "industry": ["hospitality", "real-estate", "fashion"]
+  },
+  "useWhen": [
+    "Boutique hotel or resort homepage with a heavy full-bleed hero image",
+    "Luxury brand landing page that wants a single branded first-load moment",
+    "Portfolio intro where fonts and imagery should be ready before anything is shown",
+    "Replacing a spinner with a counter that reflects real loading progress"
+  ],
+  "techniques": [
+    "lerp toward a progress target in requestAnimationFrame",
+    "frame-rate independent damping",
+    "clip-path inset curtain wipe",
+    "overflow-hidden line masks",
+    "role=progressbar with aria-valuenow",
+    "inert and aria-busy handoff"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "purpose",
+      "how": "The counter reports progress. The displayed number chases the share of asset weight that has loaded, so it slows while a large asset is pending and never shows 100 before everything has resolved. A hard cap of 1400ms (COUNTER_MAX) stops a slow asset from holding the page hostage."
+    },
+    {
+      "principle": "timing",
+      "how": "The whole intro fits a 2.5s budget. Assets resolve within 950ms (LOAD_BUDGET), the counter settles in about 1.0 to 1.2s, the curtain takes 640ms, and the last headline line lands 980ms after the curtain starts. Measured totals were 2.1 to 2.2s."
+    },
+    {
+      "principle": "masking",
+      "how": "The curtain is clip-path: inset(0 0 100% 0) on the loader, so its bottom edge rises and the hero is uncovered in place. Each headline line sits in an overflow-hidden span and its child translates from 108% to 0, so the text appears from behind its own baseline."
+    },
+    {
+      "principle": "choreography",
+      "how": "The hero lines start 240ms into the curtain (--reveal-delay) and follow at 70ms intervals (--line-stagger), top line first. The nav fades in at 320ms and the meta copy at 520ms, after the headline has led."
+    },
+    {
+      "principle": "reduced-motion",
+      "how": "The counter still counts because it carries information. The curtain becomes a 240ms opacity fade, the headline lines fade without rising, and the 1.08 to 1 image settle is removed."
+    }
+  ],
+  "directions": [
+    { "name": "Editorial", "change": "Put the counter in a narrow serif column beside the issue title, wipe the curtain sideways with inset(0 0 0 100%), and reveal a cover story headline instead of a photo." },
+    { "name": "Brutalist", "change": "Use a monospaced counter that fills the viewport width, drop the easing on the number so it ticks in whole steps, and cut the curtain in one 400ms move with no image settle." },
+    { "name": "Playful", "change": "Replace the dark curtain with a saturated colour, split it into three vertical panels that lift with a 60ms stagger, and let the headline overshoot slightly." }
+  ],
+  "pitfalls": [
+    "Driving the counter from a timer alone. It then reaches 100 while the hero is still loading, and people learn the number means nothing.",
+    "Running the loader on every navigation. Show it on the first visit or a cold load only, or it becomes friction.",
+    "Letting the total run past about 2.5s. Each extra second loses visitors before they see the page.",
+    "Leaving the loader focusable after it wipes away. Set inert and aria-hidden when it finishes so keyboard and screen reader users land on the page.",
+    "Lerping with a fixed factor per frame. On a 120Hz screen it runs twice as fast. Scale the factor by frame time as this demo does."
+  ],
+  "tunables": [
+    { "name": "LERP", "default": "0.14", "effect": "How quickly the displayed number chases real progress, per 60Hz frame." },
+    { "name": "LOAD_BUDGET", "default": "950", "effect": "Upper bound in ms for when the simulated assets finish. Replace with real load events in production." },
+    { "name": "COUNTER_MAX", "default": "1400", "effect": "Hard cap in ms after which the counter is forced to 100." },
+    { "name": "--curtain-duration", "default": "640ms", "effect": "Length of the upward curtain wipe." },
+    { "name": "--line-stagger", "default": "70ms", "effect": "Delay between headline lines as they rise." },
+    { "name": "--reveal-delay", "default": "240ms", "effect": "How far into the curtain wipe the first headline line starts." }
+  ],
+  "reducedMotion": "The counter still counts to 100, then the loader fades out over 240ms instead of wiping, the headline lines fade in without travel, and the hero image does not scale."
+}

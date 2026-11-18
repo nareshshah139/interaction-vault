@@ -1,0 +1,67 @@
+{
+  "title": "Shared Element Page Swap",
+  "summary": "Clicking a project tile grows its image into the hero of a detail view, and the back button shrinks it into the same tile.",
+  "facets": {
+    "interaction": ["page-transition", "contextual-transition"],
+    "section": ["portfolio", "case-study"],
+    "element": ["card"],
+    "style": ["editorial", "image-led", "minimal"],
+    "industry": ["architecture", "portfolio", "studio"]
+  },
+  "useWhen": [
+    "Project index for an architecture or design studio where each tile opens a case study",
+    "Single page portfolio that needs list to detail navigation without losing the user's place",
+    "Product or property grid where the photo is the strongest link between the card and its page",
+    "Moving from a heavy SPA router transition to the native View Transitions API"
+  ],
+  "techniques": [
+    "View Transitions API",
+    "view-transition-name set per click",
+    "history.pushState and popstate",
+    "object-fit cover on transition snapshots",
+    "Web Animations API crossfade fallback",
+    "masked line reveal"
+  ],
+  "whyItWorks": [
+    {
+      "principle": "continuity",
+      "how": "Only the clicked tile's .media gets view-transition-name: project-media, and the detail .hero gets the same name inside the update callback. The browser morphs one box into the other, so the image visibly travels from its grid cell to the hero and back to the same cell on return."
+    },
+    {
+      "principle": "timing",
+      "how": "The image group runs 600ms going in and 460ms coming back (--vt-duration and --vt-duration-back). The page crossfade behind it is 200ms out and 360ms in, shortened to 160ms and 280ms on the way back, so leaving a project always feels quicker than entering it."
+    },
+    {
+      "principle": "easing",
+      "how": "The image moves across the screen, so its group uses an in-out curve, cubic-bezier(0.65, 0, 0.35, 1). The old page leaves on an ease-in and the new page and its title arrive on the ease-out cubic-bezier(0.22, 1, 0.36, 1)."
+    },
+    {
+      "principle": "choreography",
+      "how": "The image lands first. The title lines rise inside overflow-hidden masks from 220ms, 60ms apart (--text-stagger), then the facts and copy fade up from 300ms. The eye follows image, then name, then detail."
+    },
+    {
+      "principle": "reduced-motion",
+      "how": "With prefers-reduced-motion the script skips startViewTransition and uses a 160ms out, 240ms in opacity crossfade. The title lines appear in place and the tile hover zoom is off, so nothing travels."
+    }
+  ],
+  "directions": [
+    { "name": "Luxury", "change": "Use a near-black page with ivory type, slow the image group to 720ms, and add a 1.06 to 1 scale settle on the hero image after it lands." },
+    { "name": "Corporate", "change": "Use 16:10 tiles with a small client logo and a sans headline, cut --vt-duration to 480ms, and drop the grain filter for clean product shots." },
+    { "name": "Playful", "change": "Give each project a saturated background colour that also fills the detail page, and let the title lines overshoot slightly with cubic-bezier(0.34, 1.56, 0.64, 1)." }
+  ],
+  "pitfalls": [
+    "Giving every tile a view-transition-name up front. Names must be unique at capture time, so a duplicate makes the browser skip the transition and log an error. Set the name on click and clear it when the transition finishes.",
+    "Leaving the hover zoom on the tile at capture. The snapshot keeps the 1.04 scale and the hero starts at 1, so the image jumps on the first frame. The is-leaving class resets it without a transition.",
+    "Snapshots with different aspect ratios stretch by default. Set height: 100% and object-fit: cover on ::view-transition-old and ::view-transition-new for the shared name.",
+    "Forgetting popstate. Without it the browser back button changes the URL but leaves the detail view on screen.",
+    "Scrolling to the top before the transition starts. Do it inside the update callback so the old snapshot keeps the user's scroll position."
+  ],
+  "tunables": [
+    { "name": "--vt-duration", "default": "600ms", "effect": "How long the image takes to grow from tile to hero." },
+    { "name": "--vt-duration-back", "default": "460ms", "effect": "How long the image takes to shrink back. Keep it about 25 percent shorter than the forward move." },
+    { "name": "--ease-move", "default": "cubic-bezier(0.65, 0, 0.35, 1)", "effect": "Curve for the shared image as it crosses the screen." },
+    { "name": "--tile-hover-scale", "default": "1.04", "effect": "Zoom of the tile image on hover and keyboard focus." },
+    { "name": "--text-stagger", "default": "60ms", "effect": "Delay between title lines and detail blocks after the image lands." }
+  ],
+  "reducedMotion": "No shared-element morph. The views swap with a 160ms fade out and 240ms fade in, title lines appear without rising, and the tile hover zoom is removed."
+}

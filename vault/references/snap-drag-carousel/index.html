@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snap drag carousel</title>
+<style>
+  :root {
+    --paper: #efeee9;
+    --ink: #111111;
+    --red: #ff3b00;
+    --grey: #b8b6ad;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --gutter: clamp(16px, 4vw, 48px);
+    --card-width: clamp(240px, 24vw, 340px);
+    --card-gap: 20px;
+    --lift: 6px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.4 var(--mono); -webkit-font-smoothing: antialiased; }
+
+  .top { display: flex; justify-content: space-between; align-items: baseline; padding: 20px var(--gutter); border-bottom: 2px solid var(--ink); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+  .top b { font-weight: 700; }
+
+  .carousel { padding: clamp(24px, 3.5vw, 44px) 0 40px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding: 0 var(--gutter); margin-bottom: 28px; }
+  h1 { margin: 0; font: 700 clamp(40px, 6.2vw, 92px)/0.86 var(--sans); letter-spacing: -0.055em; text-transform: uppercase; }
+  .controls { display: flex; align-items: center; gap: 0; }
+  .count { font-size: 13px; font-variant-numeric: tabular-nums; margin-right: 20px; }
+  .count b { font-weight: 700; }
+  .ctrl {
+    appearance: none; width: 56px; height: 56px; display: grid; place-items: center; cursor: pointer;
+    background: var(--paper); color: var(--ink); border: 2px solid var(--ink); margin-left: -2px; position: relative;
+  }
+  .ctrl svg { transition: transform 160ms var(--ease-out); }
+  .ctrl:not(:disabled):hover, .ctrl:not(:disabled):focus-visible { background: var(--ink); color: var(--paper); }
+  .ctrl:not(:disabled):hover svg, .ctrl:not(:disabled):focus-visible svg { transform: translateX(var(--nudge)); }
+  #prev { --nudge: -3px; }
+  #next { --nudge: 3px; }
+  .ctrl:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; z-index: 1; }
+  .ctrl:disabled { cursor: default; color: var(--grey); border-color: var(--ink); }
+
+  .track {
+    position: relative; list-style: none; margin: 0; padding: 10px var(--gutter) 14px;
+    display: flex; gap: var(--card-gap); overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; cursor: grab; user-select: none;
+  }
+  .track::-webkit-scrollbar { display: none; }
+  .track.is-dragging { scroll-snap-type: none; cursor: grabbing; }
+  .track.is-dragging .card { pointer-events: none; }
+  .track.is-settling { scroll-snap-type: none; }
+  .slide { flex: 0 0 var(--card-width); scroll-snap-align: start; position: relative; }
+  .slide::before { content: ""; position: absolute; inset: 0; background: var(--ink); }
+  .card { position: relative; display: block; color: inherit; text-decoration: none; background: var(--paper); border: 2px solid var(--ink); transition: transform 160ms var(--ease-out); -webkit-user-drag: none; }
+  .card:focus-visible { outline: none; transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1)); }
+  .card:focus-visible .cap { background: var(--red); }
+  @media (hover: hover) { .card:hover { transform: translate(calc(var(--lift) * -1), calc(var(--lift) * -1)); } }
+  .poster { display: block; aspect-ratio: 4 / 5; border-bottom: 2px solid var(--ink); }
+  .poster svg { display: block; width: 100%; height: 100%; }
+  .cap { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; padding: 12px 14px 14px; }
+  .cap .n { grid-row: span 2; font-weight: 700; }
+  .cap .t { font: 700 18px/1.1 var(--sans); letter-spacing: -0.02em; text-transform: uppercase; }
+  .cap .m { color: #55544f; font-size: 12px; }
+
+  .progress { margin: 20px var(--gutter) 0; height: 2px; background: var(--grey); position: relative; overflow: hidden; }
+  .progress span { position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(0); }
+  .hint { margin: 0; padding: 10px var(--gutter) 0; font-size: 12px; color: #55544f; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    :root { --card-width: 76vw; --card-gap: 14px; }
+    .head { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .ctrl svg { transition: none; }
+    .ctrl:not(:disabled):hover svg, .ctrl:not(:disabled):focus-visible svg { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="top"><b>Form/Office</b><span>Graphic design, Rotterdam</span></div>
+
+<section class="carousel" id="carousel" role="region" aria-roledescription="carousel" aria-labelledby="works-title">
+  <div class="head">
+    <h1 id="works-title">Selected<br>works</h1>
+    <div class="controls">
+      <span class="count" aria-hidden="true"><b id="cur">01</b> / <span id="total">08</span></span>
+      <button class="ctrl" id="prev" type="button" aria-controls="track" aria-label="Previous work">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M7 1 1 7l6 6M1 7h17" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="ctrl" id="next" type="button" aria-controls="track" aria-label="Next work">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M11 1l6 6-6 6M17 7H0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+  </div>
+  <ul class="track" id="track"></ul>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+  <p class="hint">Drag, use the arrow keys, or the buttons above</p>
+  <p class="sr" id="status" aria-live="polite"></p>
+</section>
+
+<script>
+const PROJECTION_MS = 220;
+const DRAG_THRESHOLD = 4;
+
+const R = '#ff3b00', K = '#111', P = '#efeee9', G = '#b8b6ad';
+const WORKS = [
+  ['Load-bearing', 'Poster series, 2026', `<rect width="400" height="500" fill="${P}"/><circle cx="200" cy="230" r="150" fill="${R}"/><rect x="40" y="380" width="320" height="40" fill="${K}"/>`],
+  ['Concrete Hours', 'Exhibition identity, 2025', `<rect width="400" height="500" fill="${K}"/>${Array.from({ length: 12 }, (_, i) => `<path d="M${-200 + i * 60} 500 L${i * 60 + 100} 0 h22 L${-178 + i * 60} 500Z" fill="${P}"/>`).join('')}<rect x="40" y="40" width="80" height="80" fill="${R}"/>`],
+  ['Grid Weather', 'Book, 2025', `<rect width="400" height="500" fill="${P}"/>${Array.from({ length: 30 }, (_, i) => `<rect x="${40 + (i % 5) * 66}" y="${40 + Math.floor(i / 5) * 72}" width="56" height="62" fill="${i === 17 ? R : (i * 7) % 5 === 0 ? K : G}"/>`).join('')}`],
+  ['Half Moons', 'Type specimen, 2024', `<rect width="400" height="500" fill="${R}"/>${[0, 1, 2, 3].map(i => `<path d="M60 ${130 + i * 100} a140 140 0 0 1 280 0Z" fill="${i % 2 ? P : K}"/>`).join('')}`],
+  ['No.5 Press', 'Magazine, 2023', `<rect width="400" height="500" fill="${P}"/><text x="200" y="400" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="420" fill="${K}">5</text><rect x="0" y="230" width="400" height="26" fill="${R}"/>`],
+  ['Ring Road', 'Wayfinding, 2022', `<rect width="400" height="500" fill="${K}"/>${[170, 135, 100, 65, 30].map((r, i) => `<circle cx="200" cy="250" r="${r}" fill="none" stroke="${i === 2 ? R : P}" stroke-width="14"/>`).join('')}`],
+  ['Shear', 'Album cover, 2021', `<rect width="400" height="500" fill="${G}"/>${Array.from({ length: 20 }, (_, i) => { const x = (i % 4) * 100, y = Math.floor(i / 4) * 100; return `<path d="M${x} ${y}h100L${x} ${y + 100}Z" fill="${i === 9 ? R : K}"/>`; }).join('')}`],
+  ['Signal Bars', 'Data poster, 2019', `<rect width="400" height="500" fill="${P}"/>${[220, 340, 160, 400, 280, 120, 360].map((h, i) => `<rect x="${30 + i * 50}" y="${460 - h}" width="34" height="${h}" fill="${i === 3 ? R : K}"/>`).join('')}<rect x="20" y="460" width="360" height="4" fill="${K}"/>`],
+];
+
+const track = document.getElementById('track');
+const bar = document.getElementById('bar');
+const cur = document.getElementById('cur');
+const status = document.getElementById('status');
+const prev = document.getElementById('prev');
+const next = document.getElementById('next');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+track.innerHTML = WORKS.map(([t, m, art], i) => `
+  <li class="slide" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${WORKS.length}: ${t}">
+    <a class="card" href="#work-${i + 1}" draggable="false">
+      <span class="poster"><svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${art}</svg></span>
+      <span class="cap"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${t}</span><span class="m">${m}</span></span>
+    </a>
+  </li>`).join('');
+document.getElementById('total').textContent = String(WORKS.length).padStart(2, '0');
+
+const slides = [...track.children];
+const behavior = () => (reduce.matches ? 'auto' : 'smooth');
+const maxScroll = () => track.scrollWidth - track.clientWidth;
+const gutter = () => parseFloat(getComputedStyle(track).paddingLeft);
+const snapPoints = () => {
+  const m = maxScroll(), g = gutter();
+  return slides.map(s => Math.min(m, Math.max(0, s.offsetLeft - g)));
+};
+const nearestIndex = (x) => {
+  const pts = snapPoints();
+  return pts.reduce((best, p, i) => (Math.abs(p - x) < Math.abs(pts[best] - x) ? i : best), 0);
+};
+
+let index = 0;
+function render() {
+  const m = maxScroll();
+  const x = track.scrollLeft;
+  bar.style.transform = `scaleX(${m > 0 ? x / m : 1})`;
+  index = x >= m - 2 ? slides.length - 1 : nearestIndex(x);
+  cur.textContent = String(index + 1).padStart(2, '0');
+  prev.disabled = x <= 2;
+  next.disabled = x >= m - 2;
+}
+
+let renderQueued = false;
+track.addEventListener('scroll', () => {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; render(); });
+}, { passive: true });
+addEventListener('resize', render);
+
+function settleTo(x) {
+  track.classList.add('is-settling');
+  track.scrollTo({ left: x, behavior: behavior() });
+  const done = () => { track.classList.remove('is-settling'); clearTimeout(fallback); track.removeEventListener('scrollend', done); };
+  const fallback = setTimeout(done, 900);
+  track.addEventListener('scrollend', done);
+  if (Math.abs(track.scrollLeft - x) < 1) done();
+}
+
+function go(i, { focus = false } = {}) {
+  const pts = snapPoints();
+  let target = Math.max(0, Math.min(slides.length - 1, i));
+  const here = track.scrollLeft;
+  if (i > index) while (target < slides.length - 1 && pts[target] <= here + 1) target++;
+  if (i < index) while (target > 0 && pts[target] >= here - 1) target--;
+  settleTo(pts[target]);
+  status.textContent = `Work ${target + 1} of ${slides.length}: ${WORKS[target][0]}`;
+  if (focus) slides[target].querySelector('.card').focus({ preventScroll: true });
+}
+
+prev.addEventListener('click', () => go(index - 1));
+next.addEventListener('click', () => go(index + 1));
+
+document.getElementById('carousel').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  const onCard = document.activeElement?.classList.contains('card');
+  const from = onCard ? slides.indexOf(document.activeElement.parentElement) : index;
+  go(from + (e.key === 'ArrowRight' ? 1 : -1), { focus: onCard });
+});
+
+let drag = null, dragFrame = 0, suppressClick = false;
+track.addEventListener('dragstart', (e) => e.preventDefault());
+track.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse' || e.button !== 0) return;
+  drag = { id: e.pointerId, x0: e.clientX, s0: track.scrollLeft, x: e.clientX, active: false, samples: [[e.timeStamp, e.clientX]] };
+});
+track.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.x = e.clientX;
+  drag.samples.push([e.timeStamp, e.clientX]);
+  while (drag.samples.length > 2 && e.timeStamp - drag.samples[0][0] > 100) drag.samples.shift();
+  if (!drag.active) {
+    if (Math.abs(drag.x - drag.x0) < DRAG_THRESHOLD) return;
+    drag.active = true;
+    track.setPointerCapture(drag.id);
+    track.classList.add('is-dragging');
+  }
+  if (!dragFrame) dragFrame = requestAnimationFrame(() => {
+    dragFrame = 0;
+    if (drag) track.scrollLeft = drag.s0 - (drag.x - drag.x0);
+  });
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null;
+  if (!d.active) return;
+  cancelAnimationFrame(dragFrame); dragFrame = 0;
+  track.scrollLeft = d.s0 - (d.x - d.x0);
+  const [t0, x0] = d.samples[0], [t1, x1] = d.samples[d.samples.length - 1];
+  const velocity = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+  const projected = track.scrollLeft - velocity * PROJECTION_MS;
+  track.classList.remove('is-dragging');
+  settleTo(snapPoints()[nearestIndex(projected)]);
+  suppressClick = true;
+  setTimeout(() => { suppressClick = false; }, 0);
+}
+track.addEventListener('pointerup', endDrag);
+track.addEventListener('pointercancel', endDrag);
+track.addEventListener('click', (e) => {
+  if (suppressClick) { e.preventDefault(); e.stopPropagation(); }
+}, true);
+
+render();
+</script>
+</body>
+</html>
