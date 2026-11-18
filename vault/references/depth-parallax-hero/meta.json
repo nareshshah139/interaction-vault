@@ -1,0 +1,44 @@
+{
+  "title": "Depth Parallax Hero",
+  "summary": "A dusk landscape hero built from a sky gradient, a low sun and three ridge silhouettes that slide at different speeds as you scroll and drift slightly against the mouse, under a serif headline that stays put and fades out.",
+  "facets": {
+    "interaction": ["parallax", "scroll-animation"],
+    "section": ["hero"],
+    "element": [],
+    "style": ["organic", "luxury"],
+    "industry": ["hospitality", "real-estate"]
+  },
+  "useWhen": [
+    "boutique hotel or retreat homepage without photography",
+    "landing hero that needs depth and a sense of place from vector shapes",
+    "outdoor, travel or wine brand with a calm, slow mood",
+    "replacing a stock hero image with something lighter that still moves"
+  ],
+  "techniques": ["layered SVG silhouettes", "per-layer depth custom property", "scroll offset scaled by (1 - depth)", "lerp-damped pointer offset in requestAnimationFrame", "translate3d on fixed-size layers", "CSS keyframe entrance with stagger", "SVG feTurbulence grain as a data URI"],
+  "whyItWorks": [
+    { "principle": "physicality", "how": "Pointer movement sets a normalised target from -1 to 1. Each frame the rendered value closes 8 percent of the gap (--pointer-lerp: 0.08), the low end of the range, so the landscape drifts like something heavy and far away. The loop stops when the remaining error is under 0.0005." },
+    { "principle": "performance", "how": "Each layer is a fixed-size SVG or gradient div that only receives translate3d. Its scroll offset is scrollY times (1 - depth) times 0.55 (--scroll-depth), and its pointer offset is depth times 28px (--pointer-range). The near ridge (depth 1) scrolls with the page and the sun (depth 0.1) nearly stays put. No layer is resized or repainted." },
+    { "principle": "restraint", "how": "Only the landscape moves. The headline shifts at most 4px with the pointer (depth 0.15) and follows scroll at 0.35 while fading out over the first 55 percent of the hero height. The rest of the page below is still, so the parallax is the one strong moment on the screen." },
+    { "principle": "choreography", "how": "On load the eyebrow, headline and subline rise 18px and fade in over 700ms (--intro-duration) with 80ms between them, so the eye lands on the small label and drops into the headline. It plays once per visit, which is why 700ms is acceptable here." },
+    { "principle": "reduced-motion", "how": "With prefers-reduced-motion the script stops writing transforms, the layers are pinned with transform: none !important, and the entrance becomes a 300ms opacity fade with no stagger. The scene is the same picture, held still." }
+  ],
+  "directions": [
+    { "name": "Minimal", "change": "Drop to two ridges in close greys on an off-white sky, remove the sun and the grain, and set the headline in a grotesk at weight 500." },
+    { "name": "Playful", "change": "Use flat saturated hills with round tops, add a cloud layer at depth 0.2 that also loops slowly on an infinite linear keyframe, and raise --pointer-range to 48px." },
+    { "name": "Experimental", "change": "Replace the ridges with stacked blurred gradient blobs at different depths and add a small blur filter that grows on the far layers as the page scrolls." }
+  ],
+  "pitfalls": [
+    "Making layers exactly the hero's size leaves bare edges once they shift. Give each layer extra width (here 110 percent) and extend ridges below the fold.",
+    "Moving the headline at a strong parallax rate makes it hard to read mid-scroll. Keep text near the page rate and fade it instead.",
+    "Applying pointer offsets on touch devices makes the scene jump to wherever a finger lands. Gate the pointer part to fine pointers.",
+    "Using background-attachment: fixed for parallax repaints on every scroll and is ignored on iOS."
+  ],
+  "tunables": [
+    { "name": "--scroll-depth", "default": "0.55", "effect": "How strongly far layers lag behind the page as you scroll." },
+    { "name": "--pointer-range", "default": "28px", "effect": "Pointer offset of the nearest layer; farther layers move proportionally less." },
+    { "name": "--pointer-lerp", "default": "0.08", "effect": "Pointer follow factor per frame. Lower is heavier and slower." },
+    { "name": "--depth", "default": "0.1 to 1 per layer", "effect": "Set inline on each layer. 1 moves with the page, values near 0 stay put on scroll and barely react to the pointer." },
+    { "name": "--intro-duration", "default": "700ms", "effect": "Length of the one-time headline entrance." }
+  ],
+  "reducedMotion": "Layers and headline stay still on scroll and pointer. The headline appears with a 300ms fade and no stagger, and the Book a room underline is drawn at full width from the start and brightens from 0.35 to full opacity on hover and focus instead of growing."
+}

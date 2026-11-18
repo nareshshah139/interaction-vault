@@ -1,0 +1,44 @@
+{
+  "title": "Blend Cursor",
+  "summary": "A small dot replaces the mouse cursor, trails it with a little weight, and swells into a labelled disc over projects and the reel, inverting whatever it covers.",
+  "facets": {
+    "interaction": ["cursor-interaction"],
+    "section": ["portfolio", "navigation"],
+    "element": ["list", "rows"],
+    "style": ["experimental", "minimal"],
+    "industry": ["studio", "portfolio"]
+  },
+  "useWhen": [
+    "design studio index page with a list of project names",
+    "portfolio where hovering a project should say what clicking does (View, Play)",
+    "monochrome site that needs one pointer flourish without adding colour",
+    "agency homepage with a showreel tile"
+  ],
+  "techniques": ["mix-blend-mode difference", "lerp damping in requestAnimationFrame", "pointerover event delegation with data attributes", "matchMedia (hover: hover) and (pointer: fine)", "scale transform instead of resizing"],
+  "whyItWorks": [
+    { "principle": "physicality", "how": "pointermove only stores the target. The loop closes 18 percent of the gap per frame (--cursor-lerp: 0.18), so the dot trails by a few frames and smooths hand jitter. That factor is near the top of the useful range on purpose; a cursor that lags more than that starts to feel broken. The loop sleeps once the error is under 0.1px." },
+    { "principle": "performance", "how": "The disc is always 104px (--cursor-disc) and only its scale changes, 0.096 as a 10px dot, about 0.42 over nav links and 1 over projects. Growth is a 280ms transform transition with cubic-bezier(0.22, 1, 0.36, 1), so it retargets mid-flight when you sweep across rows and never resizes a box." },
+    { "principle": "purpose", "how": "The disc grows only where clicking does something, and its label names the action: View on project rows, Play on the reel, Write on the email link. Plain links get a small unlabelled disc. The label fades in 80ms after the growth starts so it never appears on a still-small dot." },
+    { "principle": "parity", "how": "The custom cursor is a pointer-only flourish behind (hover: hover) and (pointer: fine) plus a pointerType check, and the native cursor returns everywhere else. Everything the cursor hints at also exists without it. Rows slide their title 14px on both :hover and :focus-visible, nav underlines draw on both, and the reel has a visible play glyph and label." },
+    { "principle": "restraint", "how": "The page is black on warm paper with one coloured tile. mix-blend-mode difference inverts what is under the disc, so the effect needs no new colour and stays legible over both the type and the gradient reel." }
+  ],
+  "directions": [
+    { "name": "Editorial", "change": "Swap difference for a solid ink disc with paper-coloured italic serif labels, and slow --cursor-lerp to 0.12 so it drifts like a reading lamp over long article lists." },
+    { "name": "Playful", "change": "Give each project a data-color and tint the disc with it instead of blending, and squash the dot along its velocity (scaleX from speed) for a rubbery trail." },
+    { "name": "Media-led", "change": "Show a small gradient thumbnail of the project inside the disc on rows, clipped by border-radius, so the list previews work without thumbnails in the layout." }
+  ],
+  "pitfalls": [
+    "Hiding the native cursor with cursor: none for every device leaves touch and pen users with no cursor at all. Gate it on the media query and only after the script has started.",
+    "Growing the cursor by animating width and height reflows every frame. Keep one size and scale it.",
+    "Putting mix-blend-mode on the label alone, or giving the cursor a z-index lower than fixed headers, makes the inversion disappear in places.",
+    "Positioning the cursor from raw clientX and clientY makes it shake with the hand. It also wakes a layout read on every event if you query the target's rect there."
+  ],
+  "tunables": [
+    { "name": "--cursor-lerp", "default": "0.18", "effect": "Follow factor per frame. 0.1 feels heavy, 0.3 feels almost native." },
+    { "name": "--cursor-dot", "default": "10px", "effect": "Resting dot diameter." },
+    { "name": "--cursor-disc", "default": "104px", "effect": "Full disc diameter over targets that carry a label." },
+    { "name": "--cursor-link", "default": "44px", "effect": "Disc diameter over plain links with an empty data-cursor." },
+    { "name": "--cursor-grow", "default": "280ms", "effect": "Duration of the grow and shrink transition." }
+  ],
+  "reducedMotion": "The custom cursor is switched off and the native cursor returns. Rows and the reel drop their slide and zoom and show a faint background tint on hover and focus instead."
+}

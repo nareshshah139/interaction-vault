@@ -1,0 +1,42 @@
+{
+  "title": "Pinned Horizontal Gallery",
+  "summary": "A gallery section pins to the screen while the reader keeps scrolling down, and that vertical scroll slides a row of six project panels sideways, with a hairline progress bar and a counter tracking the position.",
+  "facets": {
+    "interaction": ["horizontal-scroll", "pinned-scroll"],
+    "section": ["portfolio", "case-study"],
+    "element": ["card", "carousel"],
+    "style": ["minimal"],
+    "industry": ["architecture", "real-estate"]
+  },
+  "useWhen": [
+    "architecture or interiors practice showing a handful of projects in sequence",
+    "case study timeline that reads left to right",
+    "product range where each item needs a wide frame",
+    "replacing a carousel with something that works with the scroll wheel and trackpad"
+  ],
+  "techniques": ["position sticky stage", "scroll progress from getBoundingClientRect", "translate3d on a single track", "section height computed from track width", "transform scaleX progress bar", "requestAnimationFrame-batched scroll handler"],
+  "whyItWorks": [
+    { "principle": "performance", "how": "One element moves. The script sets the section height to viewport height plus the track's overflow (track.scrollWidth minus innerWidth), then on each scroll frame writes a single translate3d to the track and a scaleX to the 1px progress bar. Layout is measured on resize only." },
+    { "principle": "responsiveness", "how": "The page keeps native scrolling. The scroll listener is passive and only queues one requestAnimationFrame, and the offset is mapped 1:1 from scroll position (--scroll-ratio: 1) with no easing or lerp, so trackpad momentum, the scrollbar, Page Down and the space bar all drive the gallery exactly." },
+    { "principle": "easing", "how": "The track and progress bar are linear on purpose because they are scroll-linked, so the reader's hand is the easing. Easing curves appear only on hover, where the frame zooms to 1.03 over 400ms and the arrow slides in over 220ms on cubic-bezier(0.22, 1, 0.36, 1), and leave faster at 300ms and 160ms." },
+    { "principle": "parity", "how": "Each panel is a link. Tabbing to one would normally scroll the clipped stage sideways and fight the transform, so a focusin handler resets that scroll and moves the page to the vertical position that centres the focused panel. :focus-visible gets the same zoom and arrow as :hover." },
+    { "principle": "reduced-motion", "how": "With prefers-reduced-motion the section stops pinning and the row becomes a plain horizontal scroller with scroll-snap. The bar then follows the row's own scrollLeft, so position is still shown without converting vertical scroll into sideways travel." }
+  ],
+  "directions": [
+    { "name": "Editorial", "change": "Make panels alternate between wide images and narrow text columns with a large serif pull quote, so the horizontal run reads like a magazine spread." },
+    { "name": "Experimental", "change": "Skew each panel slightly by its distance from the viewport centre (computed in the same frame) and set the counter in oversized type that slides with progress." },
+    { "name": "Luxury", "change": "Use a dark ground, widen --panel-width to 70vw, and give each frame a slow inner parallax of about 6 percent against the track so the images feel deeper than the panel." }
+  ],
+  "pitfalls": [
+    "Intercepting wheel events to fake horizontal scroll breaks trackpads, keyboard scrolling and accessibility tools. Let the page scroll and map position to translation.",
+    "Forgetting to recompute the section height on resize leaves either a dead scroll gap at the end or a gallery that never reaches its last panel.",
+    "Adding lerp smoothing to a scroll-linked transform makes it lag behind the scrollbar and feel detached.",
+    "Leaving focus unhandled lets the browser set scrollLeft on the sticky stage, which doubles the offset and hides the focused panel."
+  ],
+  "tunables": [
+    { "name": "--panel-width", "default": "min(58vw, 760px)", "effect": "Width of each panel. 80vw on screens under 720px." },
+    { "name": "--panel-gap", "default": "3.5vw", "effect": "Space between panels." },
+    { "name": "--scroll-ratio", "default": "1", "effect": "Vertical pixels scrolled per horizontal pixel moved. Raise it to slow the gallery down." }
+  ],
+  "reducedMotion": "No pinning and no scroll-to-sideways conversion. The panels sit in a native horizontal scroller with scroll-snap, the hover zoom and arrow slide are removed (the arrow only fades), and the progress bar follows the row's own scroll position."
+}

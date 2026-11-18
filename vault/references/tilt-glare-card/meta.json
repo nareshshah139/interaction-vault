@@ -1,0 +1,44 @@
+{
+  "title": "Tilt Glare Card",
+  "summary": "A grid of four product cards where the card under the pointer leans toward it in 3D and a soft highlight slides across its face, settling back when the pointer leaves.",
+  "facets": {
+    "interaction": ["card-hover"],
+    "section": ["products"],
+    "element": ["card", "3d"],
+    "style": ["luxury", "minimal"],
+    "industry": ["product-design"]
+  },
+  "useWhen": [
+    "product grid for a premium hardware or audio brand",
+    "small catalogue of collectible objects where each item deserves a moment",
+    "dark luxury storefront that needs depth without photography",
+    "portfolio cards that should feel like physical objects under a lamp"
+  ],
+  "techniques": ["pointer events", "lerp damping", "CSS custom properties", "perspective and rotateX/rotateY", "transform-style preserve-3d", "radial-gradient glare with mix-blend-mode screen", "requestAnimationFrame loop that sleeps when settled"],
+  "whyItWorks": [
+    { "principle": "physicality", "how": "The pointer only sets a target. A requestAnimationFrame loop moves rotation and glare 12 percent of the remaining distance each frame (--tilt-lerp: 0.12), so the card trails the cursor slightly and comes to rest instead of snapping. The loop stops once the summed error drops under 0.01, so idle cards cost nothing." },
+    { "principle": "restraint", "how": "Tilt is capped at 8deg (--tilt-max) at the card edge and the lift is only 6px. Only the hovered card moves; its neighbours stay still, so the grid reads as one object picked up rather than four things wobbling." },
+    { "principle": "parity", "how": "Every :hover rule has a :focus-visible twin. A keyboard user gets the same 6px lift, the shadow and the glare parked at the top of the card, plus a brass inner ring. Tilt itself is gated to (hover: hover) and (pointer: fine) and to pointerType mouse, so touch never sees a card stuck at an angle." },
+    { "principle": "frequency", "how": "The lift and shadow enter in 220ms and leave in 160ms with cubic-bezier(0.22, 1, 0.36, 1). People sweep across a product grid many times, so the response is short and the exit is about 25 percent faster than the entrance." },
+    { "principle": "performance", "how": "The loop writes four custom properties (--rx, --ry, --gx, --gy) on the hovered card only, and they feed transform and a gradient position. Nothing touches layout. The art and price sit at translateZ(26px) and translateZ(12px) inside preserve-3d, so the depth comes from the compositor." }
+  ],
+  "directions": [
+    { "name": "Playful", "change": "Raise --tilt-max to 14deg, swap the dark surface for saturated flat colours per card, and replace the soft-light glare with a hard-edged diagonal sheen. Keep the lerp so the extra angle still settles." },
+    { "name": "Editorial", "change": "Drop the 3D tilt, keep only the glare and a 4px lift, and set product names in a large serif under each card. The highlight then reads as paper catching light rather than a device." },
+    { "name": "Collectible", "change": "Use a conic-gradient rainbow under the glare with mix-blend-mode color-dodge for a foil trading-card look, and raise --glare-opacity toward 0.8." }
+  ],
+  "pitfalls": [
+    "Setting overflow: hidden on the tilting element flattens preserve-3d, so the translateZ depth on the art disappears. Round the glare with border-radius: inherit instead of clipping.",
+    "Writing rotation straight from pointer coordinates makes the card twitch on every mouse jitter. Keep the target and the rendered value separate.",
+    "Leaving the tilt on for touch devices leaves the last-touched card frozen at an angle, because touch has no pointerleave in the usual sense.",
+    "Animating box-shadow on hover repaints a large blurred area every frame. Fade a pre-blurred pseudo-element's opacity instead."
+  ],
+  "tunables": [
+    { "name": "--tilt-max", "default": "8deg", "effect": "Rotation at the card edge. Above 12deg the text starts to skew enough to hurt reading." },
+    { "name": "--tilt-lerp", "default": "0.12", "effect": "Fraction of the remaining distance covered per frame. Lower feels heavier, higher feels twitchy." },
+    { "name": "--perspective", "default": "900px", "effect": "Camera distance. Smaller values exaggerate the near edge." },
+    { "name": "--glare-opacity", "default": "0.6", "effect": "Strength of the highlight on hover and focus." },
+    { "name": "--lift", "default": "-6px", "effect": "Vertical lift on hover and keyboard focus." }
+  ],
+  "reducedMotion": "Tilt and lift are removed. Hover and focus still fade in the shadow and a fixed glare near the top of the card over 220ms, and focus keeps the brass ring, so the state change stays visible without any movement."
+}

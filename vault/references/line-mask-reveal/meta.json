@@ -1,0 +1,44 @@
+{
+  "title": "Line Mask Reveal",
+  "summary": "A large serif statement is split into its rendered lines, and each line slides up from behind its own mask as it scrolls into view, one after another.",
+  "facets": {
+    "interaction": ["text-showcase", "text-reveal", "scroll-animation"],
+    "section": ["hero", "about"],
+    "element": ["rows"],
+    "style": ["editorial"],
+    "industry": ["media", "architecture"]
+  },
+  "useWhen": [
+    "long-form essay or magazine article opening with a display headline",
+    "about page that leads with one large statement",
+    "studio or architecture site where type carries the design instead of imagery",
+    "pull quotes that should arrive as the reader reaches them"
+  ],
+  "techniques": ["line splitting by measured offsetTop", "overflow hidden mask per line", "IntersectionObserver per line", "CSS transition-delay from a custom property", "debounced re-split on width change"],
+  "whyItWorks": [
+    { "principle": "masking", "how": "Each line sits in a .line wrapper with overflow: hidden and its inner span starts at translateY(105%). The text rises inside its own slot instead of flying across the page, so the layout never shifts. The wrapper adds 0.1em of bottom padding with a matching negative margin so descenders and italic tails are not clipped." },
+    { "principle": "choreography", "how": "Lines that enter in the same IntersectionObserver batch get --d of 0, 70, 140ms and so on (--reveal-stagger: 70ms), capped at 420ms (--stagger-cap). The headline's first line leads, and a five-line paragraph finishes well under half a second after its first line." },
+    { "principle": "easing", "how": "The rise is 760ms (--reveal-duration) on cubic-bezier(0.22, 1, 0.36, 1). Most of the distance is covered in the first third, so the line is readable almost at once and spends the rest settling. That is long by UI standards, which is acceptable because each line plays once per visit." },
+    { "principle": "responsiveness", "how": "Lines are the browser's real line breaks, measured after document.fonts.ready. On a width change the script waits 180ms (--resplit-debounce) after the last resize event, rebuilds the lines from the original HTML, and marks lines already on screen as revealed with transitions off for two frames, so a rotated phone never replays or loses the text." },
+    { "principle": "reduced-motion", "how": "Under prefers-reduced-motion the transform is removed and each line only fades from opacity 0 to 1 over 200ms with no delay, so the text still arrives on scroll without any travel." }
+  ],
+  "directions": [
+    { "name": "Minimal", "change": "Switch to a tight grotesk at weight 500, drop the italic accent, and halve --reveal-stagger to 35ms so the statement lands as one block with a slight ripple." },
+    { "name": "Experimental", "change": "Add a small rotate(3deg) to the starting transform with transform-origin at the line's bottom left, and alternate the direction on odd lines so the paragraph tips into place." },
+    { "name": "Luxury", "change": "Slow --reveal-duration to 900ms, open letter-spacing to 0.02em on a light serif, and pair each line with a 1px rule that scales in from the left 80ms ahead of the text." }
+  ],
+  "pitfalls": [
+    "Splitting by character count or fixed widths instead of measuring rendered lines breaks as soon as the font or viewport changes.",
+    "Splitting before web fonts load measures the fallback font; the lines then break in different places once the real font arrives. Wait for document.fonts.ready.",
+    "Re-splitting on every resize event thrashes layout and replays the animation. Debounce, and only re-split when the width actually changed, since mobile browsers fire resize when the toolbar hides.",
+    "Putting overflow: hidden on the whole paragraph instead of each line reveals everything as one slab and loses the stagger."
+  ],
+  "tunables": [
+    { "name": "--reveal-duration", "default": "760ms", "effect": "Time for one line to rise into place." },
+    { "name": "--reveal-stagger", "default": "70ms", "effect": "Delay between lines that enter together." },
+    { "name": "--stagger-cap", "default": "420ms", "effect": "Longest delay any line waits, so long paragraphs do not trail." },
+    { "name": "--reveal-ease", "default": "cubic-bezier(0.22, 1, 0.36, 1)", "effect": "Curve of the rise." },
+    { "name": "--resplit-debounce", "default": "180", "effect": "Milliseconds of quiet after a resize before lines are rebuilt." }
+  ],
+  "reducedMotion": "Lines do not move. Each line fades in over 200ms when it enters the viewport, with no stagger delay."
+}

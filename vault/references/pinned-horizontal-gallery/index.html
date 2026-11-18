@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pinned Horizontal Gallery</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --panel-width: min(58vw, 760px);
+    --panel-gap: 3.5vw;
+    --scroll-ratio: 1;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --paper: #e8e6e1;
+    --ink: #151515;
+    --muted: #6d6a64;
+    --rule: rgba(21, 21, 21, 0.16);
+    --gutter: clamp(20px, 4vw, 56px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+  .intro { min-height: 78vh; padding: var(--gutter); display: grid; grid-template-rows: auto 1fr auto; }
+  .top { display: flex; justify-content: space-between; font-size: 13px; }
+  .top b { font-weight: 600; letter-spacing: -0.01em; }
+  .intro h1 { align-self: end; margin: 0; font-weight: 500; font-size: clamp(40px, 7.4vw, 112px); line-height: 0.94; letter-spacing: -0.045em; max-width: 11ch; }
+  .intro p { display: flex; justify-content: space-between; margin: 28px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+
+  .gallery { position: relative; }
+  .stage { position: sticky; top: 0; height: 100vh; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr); }
+  .stage-head { display: flex; justify-content: space-between; align-items: baseline; padding: 22px var(--gutter) 0; font-size: 13px; }
+  .count { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .count b { color: var(--ink); font-weight: 500; }
+  .viewport { display: flex; align-items: center; min-height: 0; }
+  .track {
+    display: flex; gap: var(--panel-gap); align-items: center;
+    padding: 0 var(--gutter); width: max-content;
+    will-change: transform;
+  }
+  .panel { flex: 0 0 var(--panel-width); display: block; }
+  .frame { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #d9d6cf; }
+  .frame svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: scale(1); transition: transform 300ms var(--ease-out); }
+  .panel:hover .frame svg, .panel:focus-visible .frame svg { transform: scale(1.03); transition-duration: 400ms; }
+  .panel:focus-visible { outline-offset: 8px; }
+  .cap { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: baseline; padding-top: 14px; font-size: 14px; }
+  .cap .n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cap .where { color: var(--muted); font-size: 13px; }
+  .cap .arrow { display: inline-block; opacity: 0; transform: translateX(-6px); transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out); }
+  .panel:hover .arrow, .panel:focus-visible .arrow { opacity: 1; transform: translateX(0); transition-duration: 220ms; }
+
+  .progress { padding: 0 var(--gutter) 26px; display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--muted); }
+  .bar { flex: 1; height: 1px; background: var(--rule); position: relative; overflow: hidden; }
+  .bar i { position: absolute; inset: 0; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); }
+
+  .outro { padding: 18vh var(--gutter) 14vh; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; border-top: 1px solid var(--rule); }
+  .outro h2 { margin: 0; font-weight: 500; font-size: clamp(26px, 3vw, 40px); letter-spacing: -0.03em; line-height: 1.05; }
+  .outro p { margin: 0; color: var(--muted); max-width: 42ch; line-height: 1.6; font-size: 15px; }
+
+  @media (max-width: 720px) {
+    :root { --panel-width: 80vw; --panel-gap: 5vw; }
+    .cap .where { display: none; }
+    .frame { aspect-ratio: 4 / 5; }
+    .outro { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gallery { height: auto !important; }
+    .stage { position: relative; height: auto; overflow: visible; gap: 24px; padding-bottom: 24px; }
+    .viewport { display: block; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); padding-bottom: 12px; }
+    .track { transform: none !important; }
+    .panel { scroll-snap-align: start; }
+    .frame svg, .panel:hover .frame svg, .panel:focus-visible .frame svg { transform: none; }
+    .cap .arrow { transform: none; }
+  }
+</style>
+</head>
+<body>
+<header class="intro">
+  <div class="top"><b>Hollis &amp; Rue Architects</b><span>Houses 2019 to 2026</span></div>
+  <h1>Six houses on one coastline</h1>
+  <p><span>Selected residential work</span><span>Scroll to walk the coast</span></p>
+</header>
+
+<section class="gallery" aria-label="Selected houses">
+  <div class="stage">
+    <div class="stage-head"><span>Selected houses</span><span class="count" aria-hidden="true"><b class="current">01</b> / 06</span></div>
+    <div class="viewport">
+      <div class="track">
+        <a class="panel" href="#salt">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#d8d4cb"/>
+              <rect y="360" width="800" height="140" fill="#bdb7aa"/>
+              <rect x="190" y="210" width="420" height="150" fill="#f1efea"/>
+              <rect x="190" y="210" width="420" height="16" fill="#2b2a28"/>
+              <rect x="250" y="250" width="180" height="110" fill="#3d4a52"/>
+              <rect x="470" y="250" width="90" height="60" fill="#3d4a52"/>
+              <rect x="610" y="226" width="80" height="134" fill="#c8c2b6"/>
+              <rect x="0" y="360" width="800" height="3" fill="#8f897d"/>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">01</span><span>Salt House <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Aldeburgh, 2026</span></div>
+        </a>
+        <a class="panel" href="#dune">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#cfd3d2"/>
+              <path d="M0 400 Q200 330 420 380 T800 360 V500 H0 Z" fill="#c9bfa9"/>
+              <path d="M260 380 L400 180 L540 380 Z" fill="#2f2f2d"/>
+              <path d="M300 380 L400 236 L500 380 Z" fill="#e9e5dc"/>
+              <rect x="372" y="300" width="56" height="80" fill="#3f4c55"/>
+              <path d="M540 380 L620 270 L700 380 Z" fill="#5a5953"/>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">02</span><span>Dune Pavilion <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Walberswick, 2025</span></div>
+        </a>
+        <a class="panel" href="#tidal">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#e3dfd6"/>
+              <rect y="390" width="800" height="110" fill="#9aa6a8"/>
+              <rect x="120" y="160" width="560" height="120" fill="#a59a86"/>
+              <g fill="#7e7462"><rect x="120" y="160" width="560" height="8"/><rect x="120" y="272" width="560" height="8"/></g>
+              <g fill="#2e3437"><rect x="170" y="190" width="110" height="70"/><rect x="310" y="190" width="110" height="70"/><rect x="450" y="190" width="180" height="70"/></g>
+              <g fill="#6c6658"><rect x="180" y="280" width="10" height="110"/><rect x="390" y="280" width="10" height="110"/><rect x="600" y="280" width="10" height="110"/></g>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">03</span><span>Tidal Stilt House <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Orford Ness, 2024</span></div>
+        </a>
+        <a class="panel" href="#chapel">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#2c2d2b"/>
+              <rect y="380" width="800" height="120" fill="#1f201e"/>
+              <path d="M300 380 V200 L400 120 L500 200 V380 Z" fill="#e6e1d6"/>
+              <rect x="388" y="230" width="24" height="150" fill="#f4c76a"/>
+              <path d="M500 380 V250 H640 V380 Z" fill="#c9c3b6"/>
+              <rect x="540" y="290" width="60" height="40" fill="#f4c76a" opacity=".85"/>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">04</span><span>Chapel Conversion <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Dunwich, 2023</span></div>
+        </a>
+        <a class="panel" href="#boat">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#dcd8cf"/>
+              <rect y="370" width="800" height="130" fill="#b4ad9e"/>
+              <path d="M170 370 V240 Q400 150 630 240 V370 Z" fill="#43403a"/>
+              <path d="M210 370 V258 Q400 186 590 258 V370 Z" fill="#d9d2c3"/>
+              <rect x="250" y="290" width="300" height="80" fill="#36444b"/>
+              <g fill="#d9d2c3"><rect x="320" y="290" width="6" height="80"/><rect x="398" y="290" width="6" height="80"/><rect x="474" y="290" width="6" height="80"/></g>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">05</span><span>Boat Shed House <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Woodbridge, 2021</span></div>
+        </a>
+        <a class="panel" href="#tower">
+          <div class="frame" aria-hidden="true">
+            <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
+              <rect width="800" height="500" fill="#c9cfd1"/>
+              <rect y="400" width="800" height="100" fill="#a8a493"/>
+              <rect x="350" y="90" width="110" height="310" fill="#efece5"/>
+              <rect x="350" y="90" width="110" height="12" fill="#2a2a28"/>
+              <g fill="#3a464d"><rect x="372" y="130" width="66" height="40"/><rect x="372" y="200" width="66" height="40"/><rect x="372" y="270" width="66" height="40"/></g>
+              <rect x="460" y="300" width="160" height="100" fill="#b9b2a2"/>
+              <rect x="490" y="330" width="100" height="40" fill="#3a464d"/>
+            </svg>
+          </div>
+          <div class="cap"><span class="n">06</span><span>Lookout Tower <span class="arrow" aria-hidden="true">&rarr;</span></span><span class="where">Shingle Street, 2019</span></div>
+        </a>
+      </div>
+    </div>
+    <div class="progress" aria-hidden="true"><span>Coast</span><span class="bar"><i></i></span><span>North</span></div>
+  </div>
+</section>
+
+<section class="outro">
+  <h2>Every house starts with a walk along the shingle.</h2>
+  <p>We spend the first week of every commission on site at different tides. The drawings come later. Write to the studio for the full monograph.</p>
+</section>
+
+<script>
+  const gallery = document.querySelector(".gallery");
+  const stage = gallery.querySelector(".stage");
+  const viewport = gallery.querySelector(".viewport");
+  const track = gallery.querySelector(".track");
+  const panels = [...track.querySelectorAll(".panel")];
+  const bar = gallery.querySelector(".bar i");
+  const current = gallery.querySelector(".current");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const RATIO = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scroll-ratio"));
+
+  let distance = 0;
+  let frame = 0;
+
+  function measure() {
+    if (reduced.matches) { gallery.style.height = ""; return; }
+    distance = Math.max(0, track.scrollWidth - innerWidth);
+    gallery.style.height = innerHeight + distance * RATIO + "px";
+  }
+
+  function show(progress) {
+    bar.style.transform = `scaleX(${progress.toFixed(4)})`;
+    current.textContent = String(Math.round(progress * (panels.length - 1)) + 1).padStart(2, "0");
+  }
+
+  function render() {
+    frame = 0;
+    if (reduced.matches) {
+      const max = viewport.scrollWidth - viewport.clientWidth;
+      show(max > 0 ? viewport.scrollLeft / max : 0);
+      return;
+    }
+    const scrollable = gallery.offsetHeight - innerHeight;
+    const progress = scrollable > 0 ? Math.min(1, Math.max(0, -gallery.getBoundingClientRect().top / scrollable)) : 0;
+    track.style.transform = `translate3d(${(-progress * distance).toFixed(2)}px, 0, 0)`;
+    show(progress);
+  }
+  const queue = () => { if (!frame) frame = requestAnimationFrame(render); };
+
+  // Focus would otherwise scroll the clipped stage sideways and fight the transform; move the page instead.
+  track.addEventListener("focusin", (e) => {
+    const panel = e.target.closest(".panel");
+    if (!panel || reduced.matches) return;
+    stage.scrollLeft = 0;
+    viewport.scrollLeft = 0;
+    const centre = panel.offsetLeft + panel.offsetWidth / 2 - innerWidth / 2;
+    const progress = distance ? Math.min(1, Math.max(0, centre / distance)) : 0;
+    const top = gallery.getBoundingClientRect().top + scrollY + progress * (gallery.offsetHeight - innerHeight);
+    scrollTo({ top, behavior: "instant" });
+  });
+
+  addEventListener("scroll", queue, { passive: true });
+  viewport.addEventListener("scroll", queue, { passive: true });
+  addEventListener("resize", () => { measure(); queue(); });
+  reduced.addEventListener("change", () => { track.style.transform = ""; measure(); queue(); });
+  measure();
+  render();
+</script>
+</body>
+</html>

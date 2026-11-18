@@ -1,0 +1,43 @@
+{
+  "title": "Stacked Cards Scroll",
+  "summary": "Four colourful feature cards pin near the top of the screen one after another, and each card shrinks back and darkens a little as the next one slides over it, leaving a fanned stack of edges.",
+  "facets": {
+    "interaction": ["stacked-scroll", "pinned-scroll", "scroll-animation"],
+    "section": ["features"],
+    "element": ["card"],
+    "style": ["playful"],
+    "industry": ["saas", "finance"]
+  },
+  "useWhen": [
+    "consumer app landing page with three to five features to walk through",
+    "onboarding story where each step builds on the last",
+    "pricing or plan explainer that should feel like a deck being dealt",
+    "friendly fintech or productivity product with a bright palette"
+  ],
+  "techniques": ["position sticky with per-card top offsets", "scroll progress per card from getBoundingClientRect", "scale with transform-origin top", "overlay opacity for dimming", "requestAnimationFrame-batched passive scroll listener"],
+  "whyItWorks": [
+    { "principle": "continuity", "how": "The stack is built from native position: sticky, each card stuck 18px lower than the one before (--stack-offset). Earlier cards scale from transform-origin 50% 0, so their top edges stay pinned and peek out above the newcomer. You can always see how many cards are behind the current one and where they went." },
+    { "principle": "performance", "how": "Per frame the script reads four getBoundingClientRect values, then writes one scale and one --dim opacity per card. Sticky offsets are read once and again on resize, not every frame. Dimming is a pre-filled ::after overlay fading up to 0.4 opacity, not a filter: brightness() repaint." },
+    { "principle": "easing", "how": "Scale and dim are linear in scroll position because they are scroll-linked. A card loses 5 percent of its scale (--stack-shrink: 0.05) and gains 0.16 of overlay (--stack-dim) for each later card that arrives, so the first card ends at 0.85 scale under three others. Hover easing is separate: the arrow nudges 5px in 200ms and returns in 160ms." },
+    { "principle": "restraint", "how": "The cards carry the colour, so the motion stays small. Depth comes from 5 percent steps and a darkening overlay, nothing rotates or bounces, and the copy inside each card never moves." },
+    { "principle": "reduced-motion", "how": "Under prefers-reduced-motion the cards still stick in turn, since that is plain scrolling, but the scale and dim are forced off with !important, and the call-to-action lift becomes an opacity change." }
+  ],
+  "directions": [
+    { "name": "Corporate", "change": "Use one neutral card colour with a thin border, cut --stack-shrink to 0.03, and replace the illustrations with small product screenshots drawn in SVG." },
+    { "name": "Luxury", "change": "Go dark, raise --stack-dim to 0.3 so earlier cards fall into shadow, and set headings in a light serif with generous tracking." },
+    { "name": "Experimental", "change": "Add a slight rotate of about -1.5deg per covered card so the stack fans like a hand of cards, driven by the same arrival value." }
+  ],
+  "pitfalls": [
+    "Putting each sticky card in its own wrapper ends the sticking as soon as that wrapper scrolls past. All cards must share one parent that spans the whole stack.",
+    "Scaling from the centre lets earlier cards shrink away from the top and leaves a gap, so the stack stops reading as a pile.",
+    "Animating height or top to fake the stack causes layout every frame. Let sticky do the positioning and transform only the visuals.",
+    "Making cards taller than the viewport minus the stack offset hides their bottom edge while pinned."
+  ],
+  "tunables": [
+    { "name": "--stack-top", "default": "12vh", "effect": "Where the first card pins." },
+    { "name": "--stack-offset", "default": "18px", "effect": "Extra drop per card, which sets how much of each earlier card stays visible." },
+    { "name": "--stack-shrink", "default": "0.05", "effect": "Scale removed from a card per later card that arrives." },
+    { "name": "--stack-dim", "default": "0.16", "effect": "Overlay opacity added per later card, capped at 0.4." }
+  ],
+  "reducedMotion": "Cards still pin one after another with native sticky positioning, but they do not scale or darken. The call-to-action fades slightly on hover and focus instead of lifting, and the arrow does not move."
+}
