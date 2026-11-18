@@ -1,0 +1,28 @@
+{
+  "title": "Curtain Intro",
+  "summary": "A full-screen curtain holds briefly, then wipes upward to reveal the page.",
+  "facets": {
+    "interaction": ["preloader"],
+    "section": ["fullscreen"],
+    "element": [],
+    "style": ["playful"],
+    "industry": ["hospitality", "food"]
+  },
+  "useWhen": ["loading screen for a restaurant site with a short intro", "welcome moment once per visit"],
+  "techniques": ["clip-path inset", "setTimeout hold", "custom properties read from JS"],
+  "whyItWorks": [
+    { "principle": "masking", "how": "The curtain is revealed away through a clip-path inset rather than sliding across the page." },
+    { "principle": "timing", "how": "A 600ms hold and a 700ms wipe sit in the page-level 400 to 800ms band." },
+    { "principle": "reduced-motion", "how": "Under the media query the wipe becomes a 200ms fade." }
+  ],
+  "directions": [
+    { "name": "Brisk", "change": "Cut the hold to 300 and the wipe to 500ms." },
+    { "name": "Ceremonial", "change": "Wipe from the center outward with a circle clip-path." }
+  ],
+  "pitfalls": ["Showing the curtain on every route change turns a welcome into a delay."],
+  "tunables": [
+    { "name": "--curtain-duration", "default": "700ms", "effect": "Time the wipe takes." },
+    { "name": "--curtain-hold", "default": "600", "effect": "Milliseconds the curtain waits before wiping." }
+  ],
+  "reducedMotion": "The curtain fades out in 200ms with no clip movement."
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curtain Intro</title>
+<style>
+:root {
+  --curtain-duration: 700ms;
+  --curtain-hold: 600;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: system-ui, sans-serif;
+  background: #fff8ee;
+  color: #3b1f0b;
+}
+.curtain {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #3b1f0b;
+  color: #fff8ee;
+  clip-path: inset(0 0 0 0);
+  transition: clip-path var(--curtain-duration) cubic-bezier(0.76, 0, 0.24, 1);
+}
+.curtain.done {
+  clip-path: inset(0 0 100% 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .curtain { clip-path: none; opacity: 1; transition: opacity 200ms ease-out; }
+  .curtain.done { clip-path: none; opacity: 0; pointer-events: none; }
+}
+</style>
+</head>
+<body>
+<div class="curtain" id="curtain" aria-hidden="true"><p>Fresh daily</p></div>
+<main><h1>Welcome in</h1></main>
+<script>
+const hold = Number(getComputedStyle(document.documentElement).getPropertyValue("--curtain-hold"));
+setTimeout(() => document.getElementById("curtain").classList.add("done"), hold);
+</script>
+</body>
+</html>

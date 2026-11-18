@@ -1,0 +1,28 @@
+{
+  "title": "Rise Headline",
+  "summary": "Headline lines slide up out of a clip as the section scrolls into view.",
+  "facets": {
+    "interaction": ["text-reveal"],
+    "section": ["hero", "about"],
+    "element": [],
+    "style": ["editorial", "minimal"],
+    "industry": ["media"]
+  },
+  "useWhen": ["editorial article headline that reveals as the reader scrolls", "magazine style long read opening"],
+  "techniques": ["IntersectionObserver", "overflow clip", "staggered transition delay"],
+  "whyItWorks": [
+    { "principle": "masking", "how": "Each line sits in an overflow hidden parent and its child translates by its own height." },
+    { "principle": "choreography", "how": "Lines start 60ms apart so the eye reads top to bottom." },
+    { "principle": "easing", "how": "The entrance uses an ease-out curve so the text lands softly." }
+  ],
+  "directions": [
+    { "name": "Quiet", "change": "Shorten --rise-duration to 400ms and remove the stagger." },
+    { "name": "Dramatic", "change": "Raise --rise-stagger to 80ms and add a third line." }
+  ],
+  "pitfalls": ["Stagger longer than 400ms in total makes the last line feel late."],
+  "tunables": [
+    { "name": "--rise-duration", "default": "600ms", "effect": "Time each line takes to rise." },
+    { "name": "--rise-stagger", "default": "60ms", "effect": "Delay between consecutive lines." }
+  ],
+  "reducedMotion": "The lines are visible at once with no movement."
+}

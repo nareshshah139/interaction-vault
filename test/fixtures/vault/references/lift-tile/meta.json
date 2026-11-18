@@ -1,0 +1,28 @@
+{
+  "title": "Lift Tile",
+  "summary": "A product tile that rises a few pixels on hover or keyboard focus.",
+  "facets": {
+    "interaction": ["card-hover"],
+    "section": ["products", "portfolio"],
+    "element": ["card"],
+    "style": ["minimal", "luxury"],
+    "industry": ["product-design"]
+  },
+  "useWhen": ["product grid for a premium hardware brand", "catalogue tiles that should feel tactile"],
+  "techniques": ["CSS transform", "custom properties"],
+  "whyItWorks": [
+    { "principle": "frequency", "how": "The tile moves 6px in 180ms, small enough to see fifty times a session." },
+    { "principle": "easing", "how": "A strong ease-out curve makes the tile respond at once and settle gently." },
+    { "principle": "parity", "how": "The lift is bound to :hover and :focus-visible in the same rule." }
+  ],
+  "directions": [
+    { "name": "Editorial", "change": "Swap the lift for a slow underline wipe and drop the shadow." },
+    { "name": "Playful", "change": "Add a two degree rotation and raise --lift to 10px." }
+  ],
+  "pitfalls": ["Raising the duration past 300ms makes dense grids feel sticky."],
+  "tunables": [
+    { "name": "--lift", "default": "6px", "effect": "Distance the tile rises." },
+    { "name": "--lift-duration", "default": "180ms", "effect": "Time the rise takes." }
+  ],
+  "reducedMotion": "The tile stays still and keeps its normal appearance."
+}
